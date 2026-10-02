@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function myRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isAdmin() {
+      return signedIn() && myRole() == 'admin';
+    }
+    function isStaffUp() {
+      return signedIn() && (myRole() == 'staff' || myRole() == 'admin');
+    }
+
+    // Users: anyone can create ONLY their own doc as role 'user'.
+    // Only admins can change roles. Make your first admin by editing the role in the Firebase console.
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isStaffUp());
+      allow create: if signedIn() && request.auth.uid == uid
+                    && request.resource.data.role == 'user';
+      // Admins can change anything. Everyone else can edit their own doc,
+      // but NOT their own role and NOT their own "active" flag (so a deactivated
+      // account can't switch itself back on).
+      allow update: if signedIn() && (isAdmin() || (request.auth.uid == uid
+                    && request.resource.data.role == resource.data.role
+                    && request.resource.data.get('active', true) == resource.data.get('active', true)));
+      allow delete: if isAdmin();
+    }
+
+    match /logs/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isStaffUp() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    match /notifications/{id} {
+      allow read, update: if signedIn() && resource.data.userId == request.auth.uid;
+      // You can notify yourself; only staff/admin can notify other people
+      allow create: if signedIn() && (request.resource.data.userId == request.auth.uid || isStaffUp());
+    }
+
+    // DEMO collection for the CRUD kit. For each new topic collection, copy this block.
+    match /items/{id} {
+      allow read: if signedIn();
+      allow write: if isStaffUp();
+    }
+
+    // TOTP secret + hashed recovery codes: owner only (staff can NOT read these)
+    match /totp/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /sms_outbox/{id} {
+      allow create: if signedIn();
+      allow read: if isStaffUp();
+    }
+  }
+}

@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+html.reduce-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Dark mode: overrides for the few colors we use */
+html.dark body, html.dark .bg-gray-50 { background: #111827; color: #f3f4f6; }
+html.dark .bg-white { background: #1f2937; }
+html.dark .text-gray-900 { color: #f3f4f6; }
+html.dark .text-gray-700 { color: #d1d5db; }
+html.dark .border { border-color: #6b7280; }
+html.dark input, html.dark select, html.dark textarea { color: #f3f4f6; }
+html.dark .bg-red-50 { background: #450a0a; }
+html.dark .text-red-800, html.dark .text-red-700 { color: #fecaca; }
+html.dark .bg-green-50 { background: #052e16; }
+html.dark .text-green-900 { color: #bbf7d0; }
+
+/* High contrast */
+html.hc body, html.hc .bg-gray-50, html.hc .bg-white { background: #fff; color: #000; }
+html.hc.dark body, html.hc.dark .bg-gray-50, html.hc.dark .bg-white { background: #000; color: #fff; }
+html.hc .text-gray-700, html.hc .text-gray-900 { color: inherit; }
+html.hc .bg-blue-800 { background: #000; color: #fff; }
+html.hc input, html.hc select, html.hc textarea, html.hc .border { border: 2px solid currentColor; }
+html.hc a { text-decoration: underline; }
+
+/* Dyslexia-friendly spacing */
+html.dyslexia body {
+  font-family: Verdana, Tahoma, sans-serif;
+  letter-spacing: 0.05em;
+  word-spacing: 0.15em;
+  line-height: 1.8;
+}
