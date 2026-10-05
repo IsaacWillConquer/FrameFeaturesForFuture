@@ -7,6 +7,7 @@ import { logAction } from "../core/logger";
 import FormField from "../core/ui/FormField";
 import Button from "../core/ui/Button";
 import Alert from "../core/ui/Alert";
+import AuthShell from "../core/layout/AuthShell";
 
 export default function TwoFactorVerify() {
   const { user, verified, loading, totpEnabled, twoFactorPassed, passTwoFactor } = useAuth();
@@ -16,7 +17,7 @@ export default function TwoFactorVerify() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  if (loading) return <p role="status">Loading...</p>;
+  if (loading) return <p role="status" className="p-6">Loading...</p>;
   if (!user) return <Navigate to="/login" replace />;
   if (!verified) return <Navigate to="/verify-email" replace />;
   if (!totpEnabled || twoFactorPassed) return <Navigate to="/dashboard" replace />;
@@ -40,7 +41,7 @@ export default function TwoFactorVerify() {
       } else {
         setError("That code is not correct.");
       }
-    } catch (err) {
+    } catch {
       setError("Could not check the code. Try again.");
     }
     setBusy(false);
@@ -52,26 +53,26 @@ export default function TwoFactorVerify() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Two-factor check</h1>
-      <p className="mb-4">
-        {recovery
-          ? "Enter one of your recovery codes. Each one works only once."
-          : "Open your authenticator app and enter the 6-digit code for AWA."}
-      </p>
+    <AuthShell
+      title="Two-factor check"
+      subtitle={recovery
+        ? "Enter one of your recovery codes. Each one works only once."
+        : "Open your authenticator app and enter the 6-digit code for AWA."}
+    >
       <Alert>{error}</Alert>
       <form onSubmit={handleSubmit}>
         <FormField id="code" label={recovery ? "Recovery code" : "6-digit code"} value={code}
           onChange={(e) => setCode(e.target.value)} required autoComplete="one-time-code"
           inputMode={recovery ? "text" : "numeric"} />
-        <Button type="submit" disabled={busy}>{busy ? "Checking..." : "Continue"}</Button>
+        <Button type="submit" disabled={busy} className="w-full">{busy ? "Checking..." : "Continue"}</Button>
       </form>
-      <div className="mt-4 flex flex-col gap-3 items-start">
-        <button onClick={() => { setRecovery(!recovery); setCode(""); setError(""); }} className="underline min-h-11">
+      <div className="mt-4 flex flex-col items-start gap-2">
+        <button type="button" onClick={() => { setRecovery(!recovery); setCode(""); setError(""); }}
+          className="text-sm text-primary underline min-h-11">
           {recovery ? "Use authenticator code instead" : "Lost your phone? Use a recovery code"}
         </button>
-        <button onClick={handleLogout} className="underline min-h-11">Log out</button>
+        <button type="button" onClick={handleLogout} className="text-sm text-fg-muted underline min-h-11">Log out</button>
       </div>
-    </div>
+    </AuthShell>
   );
 }

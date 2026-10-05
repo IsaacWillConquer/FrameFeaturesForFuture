@@ -46,7 +46,9 @@ export default function IdleGuard() {
   return (
     <div role="alert" className="fixed bottom-0 left-0 right-0 bg-yellow-100 text-black border-t-4 border-yellow-600 p-4 flex flex-wrap items-center gap-4 justify-center">
       <p>You will be logged out soon because you've been inactive.</p>
-      <Button onClick={stay} autoFocus>Stay logged in</Button>
+      <Button onClick={stay} autoFocus>
+        Stay logged in
+      </Button>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./core/auth/AuthProvider";
 import { A11yProvider } from "./core/a11y/A11yProvider";
+import { ToastProvider } from "./core/ui/Toast";
 import AppRoutes from "./routes/AppRoutes";
 import "./index.css";
 
@@ -11,7 +12,9 @@ createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <AuthProvider>
       <A11yProvider>
-        <AppRoutes />
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
       </A11yProvider>
     </AuthProvider>
   </BrowserRouter>

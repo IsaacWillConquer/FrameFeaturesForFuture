@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { RefreshCw, Download, Printer } from "lucide-react";
 import { db } from "../config/firebase";
 import { COLLECTIONS } from "../config/appConfig";
 import { useCollection } from "../core/crud/useCollection";
-import Wide from "../core/layout/Wide";
+import { downloadCsv } from "../core/utils/csv";
 import Alert from "../core/ui/Alert";
 import Button from "../core/ui/Button";
+import PageHeader from "../core/ui/PageHeader";
+import { TableWrap, default as Table, Th, Td } from "../core/ui/Table";
+import Spinner from "../core/ui/Spinner";
+import Input from "../core/ui/Input";
+import VoiceInput from "../core/a11y/VoiceInput";
 
 // Last 100 log entries, with a search box. Staff and admin only.
 export default function AuditLog() {
@@ -34,43 +40,65 @@ export default function AuditLog() {
     `${l.action} ${l.details} ${names[l.uid] || ""}`.toLowerCase().includes(filter.toLowerCase())
   );
 
+  function exportCsv() {
+    downloadCsv(
+      "audit-log",
+      ["Time", "User", "Action", "Details"],
+      shown.map((l) => [l.createdAt?.toDate().toLocaleString() ?? "", names[l.uid] || l.uid, l.action, l.details || ""])
+    );
+  }
+
   return (
-    <Wide>
-      <h1 className="text-2xl font-bold mb-4">Audit log</h1>
+    <div>
+      <PageHeader
+        title="Audit log"
+        description="The most recent 100 actions across the app."
+        actions={
+          <>
+            <Button variant="secondary" onClick={exportCsv}><Download className="h-4 w-4" /> Export CSV</Button>
+            <Button variant="secondary" onClick={() => window.print()}><Printer className="h-4 w-4" /> Print</Button>
+            <Button onClick={load}><RefreshCw className="h-4 w-4" /> Refresh</Button>
+          </>
+        }
+      />
       <Alert>{error}</Alert>
-      <div className="flex flex-wrap items-end gap-4 mb-4">
+
+      <div className="mb-4 max-w-sm">
         <div>
-          <label htmlFor="filter" className="block font-medium mb-1">Search</label>
-          <input id="filter" type="search" value={filter} onChange={(e) => setFilter(e.target.value)}
-            className="border border-gray-500 rounded px-3 py-2 min-h-11 bg-white" />
+          <label htmlFor="filter" className="mb-1 block font-medium text-fg">Search</label>
+          <div className="flex gap-2">
+            <Input id="filter" type="search" value={filter} onChange={(e) => setFilter(e.target.value)} />
+            <VoiceInput label="Search by voice" onResult={(t) => setFilter(t)} />
+          </div>
         </div>
-        <Button onClick={load}>Refresh</Button>
       </div>
 
-      {loading && <p role="status">Loading...</p>}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left bg-white border">
-          <caption className="sr-only">Most recent 100 actions</caption>
-          <thead>
-            <tr>
-              <th scope="col" className="p-2 border">Time</th>
-              <th scope="col" className="p-2 border">User</th>
-              <th scope="col" className="p-2 border">Action</th>
-              <th scope="col" className="p-2 border">Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((l) => (
-              <tr key={l.id}>
-                <td className="p-2 border whitespace-nowrap">{l.createdAt?.toDate().toLocaleString()}</td>
-                <td className="p-2 border">{names[l.uid] || l.uid}</td>
-                <td className="p-2 border">{l.action}</td>
-                <td className="p-2 border">{l.details}</td>
+      {loading ? (
+        <div className="flex justify-center p-6"><Spinner /></div>
+      ) : (
+        <TableWrap>
+          <Table caption="Most recent 100 actions">
+            <thead>
+              <tr>
+                <Th>Time</Th>
+                <Th>User</Th>
+                <Th>Action</Th>
+                <Th>Details</Th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Wide>
+            </thead>
+            <tbody>
+              {shown.map((l) => (
+                <tr key={l.id}>
+                  <Td className="whitespace-nowrap">{l.createdAt?.toDate().toLocaleString()}</Td>
+                  <Td>{names[l.uid] || l.uid}</Td>
+                  <Td>{l.action}</Td>
+                  <Td>{l.details}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </TableWrap>
+      )}
+    </div>
   );
 }

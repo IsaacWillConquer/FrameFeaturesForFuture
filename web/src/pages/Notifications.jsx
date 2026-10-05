@@ -1,8 +1,14 @@
+import { Bell, CheckCheck } from "lucide-react";
 import { useAuth } from "../core/auth/AuthProvider";
 import { useNotifications } from "../core/notifications/useNotifications";
 import { notify, markRead, markAllRead } from "../core/notifications/notificationService";
 import ReadAloud from "../core/a11y/ReadAloud";
 import Button from "../core/ui/Button";
+import PageHeader from "../core/ui/PageHeader";
+import Card from "../core/ui/Card";
+import Badge from "../core/ui/Badge";
+import EmptyState from "../core/ui/EmptyState";
+import { cx } from "../core/ui/cx";
 
 export default function Notifications() {
   const { user } = useAuth();
@@ -11,38 +17,55 @@ export default function Notifications() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Notifications</h1>
-
-      <div className="flex flex-wrap gap-3 mb-4">
-        <Button onClick={() => notify(user.uid, "Test notification", "This is a test message to yourself.")}>
-          Send test to myself
-        </Button>
-        {unread > 0 && (
-          <button onClick={() => markAllRead(items)} className="underline min-h-11">Mark all read</button>
-        )}
-      </div>
-
-      {items.length === 0 && <p>No notifications yet.</p>}
-
-      <ul className="space-y-3">
-        {items.map((n) => (
-          <li key={n.id} className="bg-white border rounded p-3">
-            <p className={n.read ? "" : "font-bold"}>
-              {n.title}{!n.read && " (unread)"}
-            </p>
-            <p>{n.message}</p>
-            {n.createdAt && (
-              <p className="text-sm text-gray-700">{n.createdAt.toDate().toLocaleString()}</p>
+      <PageHeader
+        title="Notifications"
+        description={unread > 0 ? `${unread} unread` : "You're all caught up."}
+        actions={
+          <>
+            <Button onClick={() => notify(user.uid, "Test notification", "This is a test message to yourself.")}>
+              <Bell className="h-4 w-4" /> Send test
+            </Button>
+            {unread > 0 && (
+              <Button variant="secondary" onClick={() => markAllRead(items)}>
+                <CheckCheck className="h-4 w-4" /> Mark all read
+              </Button>
             )}
-            <div className="flex gap-4">
-              <ReadAloud text={`${n.title}. ${n.message}`} />
-              {!n.read && (
-                <button onClick={() => markRead(n.id)} className="underline min-h-11">Mark read</button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+          </>
+        }
+      />
+
+      {items.length === 0 ? (
+        <Card>
+          <EmptyState icon={Bell} title="No notifications yet" description="Push yourself a test message to see how it works." />
+        </Card>
+      ) : (
+        <ul className="space-y-3">
+          {items.map((n) => (
+            <li key={n.id}>
+              <Card className={cx("p-4", !n.read && "border-l-4 border-l-primary")}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="flex items-center gap-2 font-medium text-fg">
+                      {n.title}
+                      {!n.read && <Badge variant="primary">New</Badge>}
+                    </p>
+                    <p className="mt-1 text-fg-muted">{n.message}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+                  {n.createdAt && (
+                    <span className="text-sm text-fg-muted">{n.createdAt.toDate().toLocaleString()}</span>
+                  )}
+                  <ReadAloud text={`${n.title}. ${n.message}`} />
+                  {!n.read && (
+                    <button onClick={() => markRead(n.id)} className="text-sm text-primary underline min-h-11">Mark read</button>
+                  )}
+                </div>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

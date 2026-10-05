@@ -7,11 +7,23 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
   updateProfile,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../config/firebase";
 import { COLLECTIONS } from "../../config/appConfig";
 import { logAction } from "../logger";
+import { recordLogin, trustCurrentDevice } from "../security/deviceService";
+
+// Best-effort device/login tracking. Never let it block a successful login.
+async function trackLogin(uid, detail) {
+  try {
+    await recordLogin(uid, detail);
+    await trustCurrentDevice(uid);
+  } catch { /* tracking is optional */ }
+}
 
 const messages = {
   "auth/invalid-credential": "Wrong email or password.",
@@ -55,6 +67,7 @@ export async function loginUser(email, password) {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   await ensureUserDoc(cred.user);
   await logAction(cred.user.uid, "login");
+  await trackLogin(cred.user.uid, "password");
   return cred.user;
 }
 
@@ -62,6 +75,7 @@ export async function loginWithGoogle() {
   const cred = await signInWithPopup(auth, new GoogleAuthProvider());
   await ensureUserDoc(cred.user);
   await logAction(cred.user.uid, "login", "google");
+  await trackLogin(cred.user.uid, "google");
   return cred.user;
 }
 
@@ -79,4 +93,21 @@ export function resendVerification() {
 
 export function resetPassword(email) {
   return sendPasswordResetEmail(auth, email);
+}
+
+// Update the user's display name in Auth + the users/{uid} doc.
+export async function updateDisplayName(name) {
+  if (!auth.currentUser) return;
+  await updateProfile(auth.currentUser, { displayName: name });
+  await updateDoc(doc(db, COLLECTIONS.users, auth.currentUser.uid), { name });
+  await logAction(auth.currentUser.uid, "profile_update", "name");
+}
+
+// Change password. Firebase requires a recent login, so reauthenticate first.
+export async function changePassword(currentPassword, newPassword) {
+  const u = auth.currentUser;
+  const cred = EmailAuthProvider.credential(u.email, currentPassword);
+  await reauthenticateWithCredential(u, cred);
+  await updatePassword(u, newPassword);
+  await logAction(u.uid, "password_change");
 }

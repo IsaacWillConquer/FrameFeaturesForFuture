@@ -7,7 +7,16 @@ import VerifyEmail from "../pages/VerifyEmail";
 import TwoFactorVerify from "../pages/TwoFactorVerify";
 import Dashboard from "../pages/Dashboard";
 import Security from "../pages/Security";
+import Profile from "../pages/Profile";
+import Devices from "../pages/Devices";
+import Biometrics from "../pages/Biometrics";
+import VerifyIdentity from "../pages/VerifyIdentity";
+import Wallet from "../pages/Wallet";
+import SmsOutbox from "../pages/SmsOutbox";
+import AiHelper from "../pages/AiHelper";
+import CheckIn from "../pages/CheckIn";
 import Notifications from "../pages/Notifications";
+import Announcements from "../pages/Announcements";
 import QRDemo from "../pages/QRDemo";
 import Accessibility from "../pages/Accessibility";
 import MyActivity from "../pages/MyActivity";
@@ -29,6 +38,15 @@ export default function AppRoutes() {
         <Route path="/2fa" element={<TwoFactorVerify />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/biometrics" element={<ProtectedRoute><Biometrics /></ProtectedRoute>} />
+        <Route path="/verify-identity" element={<ProtectedRoute><VerifyIdentity /></ProtectedRoute>} />
+        <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
+        <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+        <Route path="/check-in" element={<ProtectedRoute><CheckIn /></ProtectedRoute>} />
+        <Route path="/ai" element={<ProtectedRoute><AiHelper /></ProtectedRoute>} />
+        <Route path="/admin/sms" element={<ProtectedRoute minRole="staff"><SmsOutbox /></ProtectedRoute>} />
+        <Route path="/announcements" element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="/qr-demo" element={<ProtectedRoute><QRDemo /></ProtectedRoute>} />
         <Route path="/accessibility" element={<ProtectedRoute><Accessibility /></ProtectedRoute>} />

@@ -1,5 +1,87 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------
+   Design tokens. Semantic colors live here; components use the
+   matching Tailwind utilities (bg-surface, text-fg-muted, ...).
+   html.dark / html.hc swap the values so themes apply at runtime.
+---------------------------------------------------------------- */
+:root {
+  --canvas: #f1f5f9;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --fg: #0f172a;
+  --fg-muted: #475569;
+  --border: #e2e8f0;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --primary-fg: #ffffff;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+}
+
+html.dark {
+  --canvas: #0b1120;
+  --surface: #1e293b;
+  --surface-2: #0f172a;
+  --fg: #f1f5f9;
+  --fg-muted: #94a3b8;
+  --border: #334155;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-fg: #ffffff;
+  --danger: #f87171;
+  --success: #4ade80;
+  --warning: #fbbf24;
+}
+
+html.hc {
+  --canvas: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #ffffff;
+  --fg: #000000;
+  --fg-muted: #000000;
+  --border: #000000;
+  --primary: #000000;
+  --primary-hover: #000000;
+  --primary-fg: #ffffff;
+  --danger: #b00000;
+  --success: #005c00;
+  --warning: #7a4b00;
+}
+
+html.hc.dark {
+  --canvas: #000000;
+  --surface: #000000;
+  --surface-2: #000000;
+  --fg: #ffffff;
+  --fg-muted: #ffffff;
+  --border: #ffffff;
+  --primary: #ffdd00;
+  --primary-hover: #ffea66;
+  --primary-fg: #000000;
+  --danger: #ff8080;
+  --success: #7CFF7C;
+  --warning: #ffd27f;
+}
+
+/* Expose the tokens as Tailwind color utilities. "inline" keeps the
+   var() reference so utilities react when the theme class changes. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg: var(--primary-fg);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+}
+
 :focus-visible {
   outline: 3px solid #f59e0b;
   outline-offset: 2px;
@@ -16,25 +98,10 @@ html.reduce-motion * {
   transition: none !important;
 }
 
-/* Dark mode: overrides for the few colors we use */
-html.dark body, html.dark .bg-gray-50 { background: #111827; color: #f3f4f6; }
-html.dark .bg-white { background: #1f2937; }
-html.dark .text-gray-900 { color: #f3f4f6; }
-html.dark .text-gray-700 { color: #d1d5db; }
-html.dark .border { border-color: #6b7280; }
-html.dark input, html.dark select, html.dark textarea { color: #f3f4f6; }
-html.dark .bg-red-50 { background: #450a0a; }
-html.dark .text-red-800, html.dark .text-red-700 { color: #fecaca; }
-html.dark .bg-green-50 { background: #052e16; }
-html.dark .text-green-900 { color: #bbf7d0; }
-
-/* High contrast */
-html.hc body, html.hc .bg-gray-50, html.hc .bg-white { background: #fff; color: #000; }
-html.hc.dark body, html.hc.dark .bg-gray-50, html.hc.dark .bg-white { background: #000; color: #fff; }
-html.hc .text-gray-700, html.hc .text-gray-900 { color: inherit; }
-html.hc .bg-blue-800 { background: #000; color: #fff; }
-html.hc input, html.hc select, html.hc textarea, html.hc .border { border: 2px solid currentColor; }
-html.hc a { text-decoration: underline; }
+/* High contrast: strengthen borders and underline links */
+html.hc a {
+  text-decoration: underline;
+}
 
 /* Dyslexia-friendly spacing */
 html.dyslexia body {
@@ -42,4 +109,19 @@ html.dyslexia body {
   letter-spacing: 0.05em;
   word-spacing: 0.15em;
   line-height: 1.8;
+}
+
+/* Print: hide app chrome, force light colors so reports are readable on paper */
+@media print {
+  html.dark {
+    --canvas: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #ffffff;
+    --fg: #000000;
+    --fg-muted: #333333;
+    --border: #999999;
+  }
+  body {
+    background: #ffffff !important;
+  }
 }

@@ -5,6 +5,7 @@ import { loginUser, loginWithGoogle, resetPassword, authErrorMessage } from "../
 import FormField from "../core/ui/FormField";
 import Button from "../core/ui/Button";
 import Alert from "../core/ui/Alert";
+import AuthShell from "../core/layout/AuthShell";
 import { secondsLocked, recordFail, clearFails } from "../core/security/loginLimiter";
 
 export default function Login() {
@@ -73,8 +74,11 @@ export default function Login() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Log in</h1>
+    <AuthShell
+      title="Log in"
+      subtitle="Welcome back. Sign in to continue."
+      footer={<>No account? <Link to="/register" className="font-medium text-primary underline">Register</Link></>}
+    >
       <Alert>{error}</Alert>
       <Alert type="info">{info}</Alert>
 
@@ -83,14 +87,20 @@ export default function Login() {
           onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         <FormField id="password" label="Password" type="password" value={password}
           onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-        <Button type="submit" disabled={busy}>{busy ? "Logging in..." : "Log in"}</Button>
+        <Button type="submit" disabled={busy} className="w-full">{busy ? "Logging in..." : "Log in"}</Button>
       </form>
 
-      <div className="mt-4 flex flex-col gap-3 items-start">
-        <button onClick={handleGoogle} className="underline min-h-11">Continue with Google</button>
-        <button onClick={handleForgot} className="underline min-h-11">Forgot password?</button>
-        <p>No account? <Link to="/register" className="underline">Register</Link></p>
+      <div className="my-4 flex items-center gap-3 text-xs text-fg-muted">
+        <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
       </div>
-    </div>
+
+      <Button type="button" variant="secondary" onClick={handleGoogle} className="w-full">
+        Continue with Google
+      </Button>
+
+      <div className="mt-4 text-center">
+        <button type="button" onClick={handleForgot} className="text-sm text-primary underline min-h-11">Forgot password?</button>
+      </div>
+    </AuthShell>
   );
 }

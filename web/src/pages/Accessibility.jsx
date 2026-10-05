@@ -1,15 +1,15 @@
 import { useA11y } from "../core/a11y/A11yProvider";
 import ReadAloud from "../core/a11y/ReadAloud";
 import Button from "../core/ui/Button";
+import PageHeader from "../core/ui/PageHeader";
+import Card, { CardHeader, CardBody } from "../core/ui/Card";
 
 function Check({ id, label, checked, onChange }) {
   return (
-    <div className="mb-3">
-      <label htmlFor={id} className="flex items-center gap-3 min-h-11">
-        <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="w-6 h-6" />
-        {label}
-      </label>
-    </div>
+    <label htmlFor={id} className="flex items-center gap-3 min-h-11 cursor-pointer rounded-lg px-2 hover:bg-surface-2">
+      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-6 w-6" />
+      <span className="text-fg">{label}</span>
+    </label>
   );
 }
 
@@ -19,27 +19,38 @@ export default function Accessibility() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Accessibility settings</h1>
-      <p className="mb-4">Changes apply right away and are saved to your account.</p>
+      <PageHeader title="Accessibility settings" description="Changes apply right away and are saved to your account." />
 
-      <fieldset className="mb-4">
-        <legend className="font-medium mb-2">Text size</legend>
-        {sizes.map(([value, label]) => (
-          <label key={value} className="flex items-center gap-3 min-h-11">
-            <input type="radio" name="textSize" value={value} checked={prefs.textSize === value}
-              onChange={() => update({ textSize: value })} className="w-6 h-6" />
-            {label}
-          </label>
-        ))}
-      </fieldset>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Text size" />
+          <CardBody>
+            <fieldset>
+              <legend className="sr-only">Text size</legend>
+              {sizes.map(([value, label]) => (
+                <label key={value} className="flex items-center gap-3 min-h-11 cursor-pointer rounded-lg px-2 hover:bg-surface-2">
+                  <input type="radio" name="textSize" value={value} checked={prefs.textSize === value}
+                    onChange={() => update({ textSize: value })} className="h-6 w-6" />
+                  <span className="text-fg">{label}</span>
+                </label>
+              ))}
+            </fieldset>
+          </CardBody>
+        </Card>
 
-      <Check id="dark" label="Dark mode" checked={prefs.dark} onChange={(v) => update({ dark: v })} />
-      <Check id="hc" label="High contrast" checked={prefs.contrast} onChange={(v) => update({ contrast: v })} />
-      <Check id="motion" label="Reduce motion" checked={prefs.reduceMotion} onChange={(v) => update({ reduceMotion: v })} />
-      <Check id="dys" label="Dyslexia-friendly spacing" checked={prefs.dyslexia} onChange={(v) => update({ dyslexia: v })} />
+        <Card>
+          <CardHeader title="Display" />
+          <CardBody className="space-y-1">
+            <Check id="dark" label="Dark mode" checked={prefs.dark} onChange={(v) => update({ dark: v })} />
+            <Check id="hc" label="High contrast" checked={prefs.contrast} onChange={(v) => update({ contrast: v })} />
+            <Check id="motion" label="Reduce motion" checked={prefs.reduceMotion} onChange={(v) => update({ reduceMotion: v })} />
+            <Check id="dys" label="Dyslexia-friendly spacing" checked={prefs.dyslexia} onChange={(v) => update({ dyslexia: v })} />
+          </CardBody>
+        </Card>
+      </div>
 
-      <div className="flex flex-wrap gap-4 mt-4 items-center">
-        <Button onClick={reset}>Reset to defaults</Button>
+      <div className="mt-6 flex flex-wrap items-center gap-4">
+        <Button variant="secondary" onClick={reset}>Reset to defaults</Button>
         <ReadAloud text="This is a sample of the read aloud feature. You can use it on notifications." label="Hear a sample" />
       </div>
     </div>

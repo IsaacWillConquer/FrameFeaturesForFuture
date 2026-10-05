@@ -47,6 +47,13 @@ service cloud.firestore {
       allow write: if isStaffUp();
     }
 
+    // Announcements: everyone signed in reads, only staff/admin post or delete.
+    match /announcements/{id} {
+      allow read: if signedIn();
+      allow create, delete: if isStaffUp();
+      allow update: if isAdmin();
+    }
+
     // TOTP secret + hashed recovery codes: owner only (staff can NOT read these)
     match /totp/{uid} {
       allow read, write: if signedIn() && request.auth.uid == uid;
@@ -55,6 +62,52 @@ service cloud.firestore {
     match /sms_outbox/{id} {
       allow create: if signedIn();
       allow read: if isStaffUp();
+    }
+
+    // Login history: a user can write their own row and read only their own.
+    match /login_history/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // Trusted devices: owner only.
+    match /trusted_devices/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // WebAuthn credential ids: owner only.
+    match /webauthn_credentials/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // Face descriptors: owner only. Never store images here.
+    match /face_descriptors/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // Wallets: owner reads; writes happen through the simulated payment flow.
+    match /wallets/{uid} {
+      allow read, write: if signedIn() && (request.auth.uid == uid || isStaffUp());
+    }
+
+    // Transactions: owner reads; signed-in users create during simulated pay.
+    match /transactions/{id} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaffUp());
+      allow create: if signedIn();
+    }
+
+    // Check-ins: users create/read their own; staff read all.
+    match /checkins/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isStaffUp() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    // AI chat history: owner only.
+    match /ai_chats/{id} {
+      allow read, create: if signedIn() && request.resource.data.uid == request.auth.uid;
     }
   }
 }

@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { Activity } from "lucide-react";
 import { db } from "../config/firebase";
 import { COLLECTIONS } from "../config/appConfig";
 import { useAuth } from "../core/auth/AuthProvider";
-import Alert from "../core/ui/Alert";
+import PageHeader from "../core/ui/PageHeader";
+import Card, { CardBody } from "../core/ui/Card";
+import EmptyState from "../core/ui/EmptyState";
+import Spinner from "../core/ui/Spinner";
 
 // Your own recent activity (logins, 2FA, etc). Spot anything you don't recognize? Change your password.
 export default function MyActivity() {
@@ -30,19 +34,29 @@ export default function MyActivity() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">My activity</h1>
-      <Alert>{error}</Alert>
-      {loading && <p role="status">Loading...</p>}
-      {!loading && logs.length === 0 && <p>No activity yet.</p>}
-      <ul className="space-y-2">
-        {logs.map((l) => (
-          <li key={l.id} className="bg-white border rounded p-3">
-            <strong>{l.action}</strong>{l.details ? ` (${l.details})` : ""}
-            <br />
-            <span className="text-sm text-gray-700">{l.createdAt?.toDate().toLocaleString()}</span>
-          </li>
-        ))}
-      </ul>
+      <PageHeader title="My activity" description="Your latest account actions. Spot something odd? Change your password." />
+      {error && <p className="mb-4 text-danger">{error}</p>}
+
+      <Card>
+        <CardBody>
+          {loading ? (
+            <div className="flex justify-center p-4"><Spinner /></div>
+          ) : logs.length === 0 ? (
+            <EmptyState icon={Activity} title="No activity yet" />
+          ) : (
+            <ul className="divide-y divide-border">
+              {logs.map((l) => (
+                <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                  <span className="font-medium text-fg">
+                    {l.action}{l.details ? <span className="text-fg-muted"> · {l.details}</span> : ""}
+                  </span>
+                  <span className="text-sm text-fg-muted">{l.createdAt?.toDate().toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
     </div>
   );
 }

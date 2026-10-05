@@ -5,6 +5,7 @@ import { registerUser, authErrorMessage } from "../core/auth/authService";
 import FormField from "../core/ui/FormField";
 import Button from "../core/ui/Button";
 import Alert from "../core/ui/Alert";
+import AuthShell from "../core/layout/AuthShell";
 
 export default function Register() {
   const { refresh } = useAuth();
@@ -41,8 +42,11 @@ export default function Register() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Create account</h1>
+    <AuthShell
+      title="Create account"
+      subtitle="It only takes a minute."
+      footer={<>Already registered? <Link to="/login" className="font-medium text-primary underline">Log in</Link></>}
+    >
       <Alert>{error}</Alert>
 
       <form onSubmit={handleRegister}>
@@ -50,14 +54,13 @@ export default function Register() {
           onChange={(e) => setName(e.target.value)} required autoComplete="name" />
         <FormField id="email" label="Email" type="email" value={email}
           onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-        <FormField id="password" label="Password (8+ characters)" type="password" value={password}
-          onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
+        <FormField id="password" label="Password" type="password" value={password}
+          onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password"
+          hint="At least 8 characters." />
         <FormField id="confirm" label="Confirm password" type="password" value={confirm}
           onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
-        <Button type="submit" disabled={busy}>{busy ? "Creating..." : "Register"}</Button>
+        <Button type="submit" disabled={busy} className="w-full">{busy ? "Creating..." : "Register"}</Button>
       </form>
-
-      <p className="mt-4">Already registered? <Link to="/login" className="underline">Log in</Link></p>
-    </div>
+    </AuthShell>
   );
 }

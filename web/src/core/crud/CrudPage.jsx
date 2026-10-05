@@ -1,15 +1,24 @@
 import { useState } from "react";
 import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { Plus, Pencil, Trash2, Download, Search, Printer } from "lucide-react";
 import { db } from "../../config/firebase";
 import { hasRole } from "../../config/appConfig";
 import { useAuth } from "../auth/AuthProvider";
 import { logAction } from "../logger";
 import { useCollection } from "./useCollection";
-import Wide from "../layout/Wide";
+import { downloadCsv } from "../utils/csv";
 import Button from "../ui/Button";
 import Alert from "../ui/Alert";
+import PageHeader from "../ui/PageHeader";
+import Card, { CardBody } from "../ui/Card";
+import { ConfirmDialog } from "../ui/Modal";
+import { TableWrap, default as Table, Th, Td } from "../ui/Table";
+import Spinner from "../ui/Spinner";
+import EmptyState from "../ui/EmptyState";
+import Input from "../ui/Input";
+import VoiceInput from "../a11y/VoiceInput";
 
-const inputClass = "w-full border border-gray-500 rounded px-3 py-2 min-h-11 bg-white";
+const inputClass = "w-full rounded-lg border border-border bg-surface px-3 py-2 min-h-11 text-fg";
 
 // One config object = one full list + add + edit + delete screen. See modules/demo/itemsConfig.js
 function Field({ field, value, onChange }) {
@@ -29,7 +38,7 @@ function Field({ field, value, onChange }) {
   }
   return (
     <div className="mb-4">
-      <label htmlFor={id} className="block font-medium mb-1">{field.label}{field.required ? " *" : ""}</label>
+      <label htmlFor={id} className="mb-1 block font-medium text-fg">{field.label}{field.required ? " *" : ""}</label>
       {input}
     </div>
   );
@@ -46,6 +55,7 @@ export default function CrudPage({ config }) {
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   function startNew() {
     setForm(Object.fromEntries(fields.map((f) => [f.name, ""])));
@@ -82,8 +92,9 @@ export default function CrudPage({ config }) {
     }
   }
 
-  async function handleDelete(item) {
-    if (!window.confirm(`Delete "${item[fields[0].name]}"? This cannot be undone.`)) return;
+  async function handleDelete() {
+    const item = pendingDelete;
+    setPendingDelete(null);
     try {
       await deleteDoc(doc(db, collectionName, item.id));
       await logAction(user.uid, `${collectionName}_delete`, item.id);
@@ -97,62 +108,103 @@ export default function CrudPage({ config }) {
     fields.some((f) => String(item[f.name] ?? "").toLowerCase().includes(search.toLowerCase()))
   );
 
+  function exportCsv() {
+    downloadCsv(
+      collectionName,
+      fields.map((f) => f.label),
+      shown.map((item) => fields.map((f) => item[f.name] ?? ""))
+    );
+  }
+
   return (
-    <Wide>
-      <h1 className="text-2xl font-bold mb-4">{title}</h1>
+    <div>
+      <PageHeader
+        title={title}
+        actions={
+          <>
+            <Button variant="secondary" onClick={exportCsv}><Download className="h-4 w-4" /> Export</Button>
+            <Button variant="secondary" onClick={() => window.print()}><Printer className="h-4 w-4" /> Print</Button>
+            {canWrite && <Button onClick={startNew}><Plus className="h-4 w-4" /> Add new</Button>}
+          </>
+        }
+      />
       <Alert>{error || loadError}</Alert>
       <Alert type="info">{message}</Alert>
 
       {editing && (
-        <form onSubmit={handleSave} className="bg-white border rounded p-4 mb-6 max-w-md">
-          <h2 className="text-xl font-semibold mb-3">{editing === "new" ? "Add" : "Edit"}</h2>
-          {fields.map((f) => (
-            <Field key={f.name} field={f} value={form[f.name]} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} />
-          ))}
-          <div className="flex gap-3">
-            <Button type="submit">Save</Button>
-            <button type="button" onClick={() => setEditing(null)} className="underline min-h-11">Cancel</button>
-          </div>
-        </form>
+        <Card className="mb-6 max-w-lg">
+          <CardBody>
+            <h2 className="mb-3 text-lg font-semibold text-fg">{editing === "new" ? "Add" : "Edit"}</h2>
+            <form onSubmit={handleSave}>
+              {fields.map((f) => (
+                <Field key={f.name} field={f} value={form[f.name]} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} />
+              ))}
+              <div className="flex gap-3">
+                <Button type="submit">Save</Button>
+                <Button type="button" variant="secondary" onClick={() => setEditing(null)}>Cancel</Button>
+              </div>
+            </form>
+          </CardBody>
+        </Card>
       )}
 
-      <div className="flex flex-wrap items-end gap-4 mb-4">
-        <div>
-          <label htmlFor="search" className="block font-medium mb-1">Search</label>
-          <input id="search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} className={inputClass} />
+      <div className="mb-4 flex flex-wrap items-end gap-4">
+        <div className="w-full max-w-xs">
+          <label htmlFor="search" className="mb-1 block font-medium text-fg">Search</label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" />
+              <Input id="search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <VoiceInput label="Search by voice" onResult={(t) => setSearch(t)} />
+          </div>
         </div>
-        {canWrite && <Button onClick={startNew}>Add new</Button>}
       </div>
 
-      {loading && <p role="status">Loading...</p>}
-      {!loading && shown.length === 0 && <p>Nothing here yet.</p>}
-
-      {shown.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left bg-white border">
-            <caption className="sr-only">{title}</caption>
+      {loading ? (
+        <div className="flex justify-center p-6"><Spinner /></div>
+      ) : shown.length === 0 ? (
+        <Card><EmptyState title="Nothing here yet" description={canWrite ? "Use Add new to create the first one." : "Check back later."} /></Card>
+      ) : (
+        <TableWrap>
+          <Table caption={title}>
             <thead>
               <tr>
-                {fields.map((f) => <th key={f.name} scope="col" className="p-2 border">{f.label}</th>)}
-                {canWrite && <th scope="col" className="p-2 border">Actions</th>}
+                {fields.map((f) => <Th key={f.name}>{f.label}</Th>)}
+                {canWrite && <Th>Actions</Th>}
               </tr>
             </thead>
             <tbody>
               {shown.map((item) => (
                 <tr key={item.id}>
-                  {fields.map((f) => <td key={f.name} className="p-2 border">{String(item[f.name] ?? "")}</td>)}
+                  {fields.map((f) => <Td key={f.name}>{String(item[f.name] ?? "")}</Td>)}
                   {canWrite && (
-                    <td className="p-2 border whitespace-nowrap">
-                      <button onClick={() => startEdit(item)} className="underline min-h-11 mr-3">Edit</button>
-                      <button onClick={() => handleDelete(item)} className="underline min-h-11">Delete</button>
-                    </td>
+                    <Td className="whitespace-nowrap">
+                      <div className="flex gap-3">
+                        <button onClick={() => startEdit(item)} className="inline-flex items-center gap-1 text-sm text-primary underline min-h-11">
+                          <Pencil className="h-4 w-4" /> Edit
+                        </button>
+                        <button onClick={() => setPendingDelete(item)} className="inline-flex items-center gap-1 text-sm text-danger underline min-h-11">
+                          <Trash2 className="h-4 w-4" /> Delete
+                        </button>
+                      </div>
+                    </Td>
                   )}
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </TableWrap>
       )}
-    </Wide>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="Delete item"
+        message={pendingDelete ? `Delete "${pendingDelete[fields[0].name]}"? This cannot be undone.` : ""}
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </div>
   );
 }
