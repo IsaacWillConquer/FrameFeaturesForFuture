@@ -20,6 +20,8 @@ export default function AuditLog() {
   const [filter, setFilter] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const pageSize = 25;
 
   async function load() {
     setLoading(true);
@@ -39,6 +41,9 @@ export default function AuditLog() {
   const shown = logs.filter((l) =>
     `${l.action} ${l.details} ${names[l.uid] || ""}`.toLowerCase().includes(filter.toLowerCase())
   );
+  const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
+  const pageSafe = Math.min(page, pageCount - 1);
+  const pageItems = shown.slice(pageSafe * pageSize, pageSafe * pageSize + pageSize);
 
   function exportCsv() {
     downloadCsv(
@@ -87,7 +92,7 @@ export default function AuditLog() {
               </tr>
             </thead>
             <tbody>
-              {shown.map((l) => (
+              {pageItems.map((l) => (
                 <tr key={l.id}>
                   <Td className="whitespace-nowrap">{l.createdAt?.toDate().toLocaleString()}</Td>
                   <Td>{names[l.uid] || l.uid}</Td>
@@ -98,6 +103,14 @@ export default function AuditLog() {
             </tbody>
           </Table>
         </TableWrap>
+      )}
+
+      {!loading && shown.length > pageSize && (
+        <nav aria-label="Log pages" className="mt-3 flex items-center justify-center gap-3">
+          <Button variant="secondary" onClick={() => setPage(Math.max(0, pageSafe - 1))} disabled={pageSafe === 0}>Previous</Button>
+          <span className="text-sm text-fg-muted">Page {pageSafe + 1} of {pageCount} ({shown.length} rows)</span>
+          <Button variant="secondary" onClick={() => setPage(Math.min(pageCount - 1, pageSafe + 1))} disabled={pageSafe >= pageCount - 1}>Next</Button>
+        </nav>
       )}
     </div>
   );

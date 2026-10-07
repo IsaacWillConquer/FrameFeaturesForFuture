@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, X } from "lucide-react";
 import { loadModels, descriptorFromVideo } from "./faceService";
+import { descriptorDelta } from "./livenessService";
 import Button from "../ui/Button";
 import Alert from "../ui/Alert";
 import Spinner from "../ui/Spinner";
@@ -45,12 +46,27 @@ export default function FaceCapture({ onCapture, onCancel }) {
     setError("");
     setBusy(true);
     try {
-      const descriptor = await descriptorFromVideo(videoRef.current);
-      if (!descriptor) {
+      // Two frames ~1s apart. A flat photo barely changes between them; a real
+      // face does (micro-movements, lighting). That's the liveness-lite check.
+      const first = await descriptorFromVideo(videoRef.current);
+      if (!first) {
         setError("No face detected. Move closer and look at the camera.");
-      } else {
-        onCapture(descriptor);
+        setBusy(false);
+        return;
       }
+      await new Promise((r) => setTimeout(r, 900));
+      const second = await descriptorFromVideo(videoRef.current);
+      if (!second) {
+        setError("Lost the face halfway. Hold still, then try again.");
+        setBusy(false);
+        return;
+      }
+      if (descriptorDelta(first, second) < 0.025) {
+        setError("Face looked too still (like a photo). Nod or shift slightly, then capture again.");
+        setBusy(false);
+        return;
+      }
+      onCapture(second);
     } catch (err) {
       setError(err.message);
     }
@@ -67,7 +83,7 @@ export default function FaceCapture({ onCapture, onCancel }) {
           </div>
         )}
       </div>
-      <p className="mt-2 text-sm text-fg-muted">Look straight at the camera in good light, then capture.</p>
+      <p className="mt-2 text-sm text-fg-muted">Look at the camera in good light and capture. We take two shots a second apart and check for movement (blocks a static photo).</p>
       <Alert>{error}</Alert>
       <div className="mt-3 flex gap-3">
         <Button onClick={capture} disabled={!ready || busy}>

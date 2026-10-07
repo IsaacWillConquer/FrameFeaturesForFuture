@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Menu, LogOut, Accessibility } from "lucide-react";
+import { Bell, Menu, LogOut, Accessibility, Volume2, VolumeX } from "lucide-react";
 import { NAV } from "../../config/appConfig";
 import { useAuth } from "../auth/AuthProvider";
 import { logoutUser } from "../auth/authService";
 import { useNotifications } from "../notifications/useNotifications";
+import { speak, stopSpeaking } from "../../adapters/speechService";
+import { useA11y } from "../a11y/A11yProvider";
 import Dropdown from "../ui/Dropdown";
 import Avatar from "../ui/Avatar";
 import Badge from "../ui/Badge";
+
+const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
 
 export default function Topbar({ onMenuClick }) {
   const { user, profile, role } = useAuth();
@@ -14,6 +19,8 @@ export default function Topbar({ onMenuClick }) {
   const navigate = useNavigate();
   const notifications = useNotifications(user?.uid);
   const unread = notifications.filter((n) => !n.read).length;
+  const { prefs } = useA11y();
+  const [readingPage, setReadingPage] = useState(false);
 
   const navItem = [...NAV].sort((a, b) => b.to.length - a.to.length).find((n) => location.pathname.startsWith(n.to));
   const title = navItem?.label || "Dashboard";
@@ -21,6 +28,19 @@ export default function Topbar({ onMenuClick }) {
   async function handleLogout() {
     await logoutUser();
     navigate("/login");
+  }
+
+  // Reads the main content of the current page aloud (Web Speech API).
+  function readPage() {
+    if (readingPage) {
+      stopSpeaking();
+      setReadingPage(false);
+      return;
+    }
+    const main = document.getElementById("main");
+    if (!main?.innerText) return;
+    setReadingPage(true);
+    speak(main.innerText, { rate: prefs?.ttsRate, onEnd: () => setReadingPage(false) });
   }
 
   return (
@@ -45,6 +65,16 @@ export default function Topbar({ onMenuClick }) {
             </span>
           )}
         </Link>
+
+        {canSpeak && (
+          <button type="button" onClick={readPage} aria-pressed={readingPage}
+            aria-label={readingPage ? "Stop reading the page" : "Read this page aloud"}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-fg-muted hover:bg-surface-2">
+            {readingPage
+              ? <VolumeX className="h-5 w-5" aria-hidden="true" />
+              : <Volume2 className="h-5 w-5" aria-hidden="true" />}
+          </button>
+        )}
 
         <Dropdown
           label="Account menu"

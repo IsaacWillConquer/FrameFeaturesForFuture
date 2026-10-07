@@ -56,6 +56,8 @@ export default function CrudPage({ config }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [page, setPage] = useState(0);
+  const pageSize = config.pageSize || 10;
 
   function startNew() {
     setForm(Object.fromEntries(fields.map((f) => [f.name, ""])));
@@ -107,6 +109,9 @@ export default function CrudPage({ config }) {
   const shown = items.filter((item) =>
     fields.some((f) => String(item[f.name] ?? "").toLowerCase().includes(search.toLowerCase()))
   );
+  const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
+  const pageSafe = Math.min(page, pageCount - 1);
+  const pageItems = shown.slice(pageSafe * pageSize, pageSafe * pageSize + pageSize);
 
   function exportCsv() {
     downloadCsv(
@@ -154,7 +159,7 @@ export default function CrudPage({ config }) {
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" />
-              <Input id="search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+              <Input id="search" type="search" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9" />
             </div>
             <VoiceInput label="Search by voice" onResult={(t) => setSearch(t)} />
           </div>
@@ -175,7 +180,7 @@ export default function CrudPage({ config }) {
               </tr>
             </thead>
             <tbody>
-              {shown.map((item) => (
+              {pageItems.map((item) => (
                 <tr key={item.id}>
                   {fields.map((f) => <Td key={f.name}>{String(item[f.name] ?? "")}</Td>)}
                   {canWrite && (
@@ -195,6 +200,14 @@ export default function CrudPage({ config }) {
             </tbody>
           </Table>
         </TableWrap>
+      )}
+
+      {!loading && shown.length > pageSize && (
+        <nav aria-label="Table pages" className="mt-3 flex items-center justify-center gap-3">
+          <Button variant="secondary" onClick={() => setPage(Math.max(0, pageSafe - 1))} disabled={pageSafe === 0}>Previous</Button>
+          <span className="text-sm text-fg-muted">Page {pageSafe + 1} of {pageCount} ({shown.length} rows)</span>
+          <Button variant="secondary" onClick={() => setPage(Math.min(pageCount - 1, pageSafe + 1))} disabled={pageSafe >= pageCount - 1}>Next</Button>
+        </nav>
       )}
 
       <ConfirmDialog

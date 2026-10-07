@@ -15,6 +15,7 @@ import Badge from "../core/ui/Badge";
 import EmptyState from "../core/ui/EmptyState";
 import Spinner from "../core/ui/Spinner";
 import FormField from "../core/ui/FormField";
+import VoiceInput from "../core/a11y/VoiceInput";
 
 export default function Wallet() {
   const { user, role } = useAuth();
@@ -106,10 +107,23 @@ export default function Wallet() {
                   {others.map((u) => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
                 </select>
               </div>
-              <FormField id="pay-amount" label="Amount" type="number" value={payAmount}
-                onChange={(e) => setPayAmount(e.target.value)} required />
-              <FormField id="pay-note" label="Note (optional)" value={payNote}
-                onChange={(e) => setPayNote(e.target.value)} />
+              <div className="mb-4">
+                <label htmlFor="pay-amount" className="mb-1 block font-medium text-fg">Amount</label>
+                <div className="flex gap-2">
+                  <input id="pay-amount" type="number" value={payAmount} required
+                    onChange={(e) => setPayAmount(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 min-h-11 text-fg" />
+                  <VoiceInput label="Amount by voice" onResult={(t) => setPayAmount(t.replace(/[^0-9.]/g, ""))} />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label htmlFor="pay-note" className="mb-1 block font-medium text-fg">Note (optional)</label>
+                <div className="flex gap-2">
+                  <input id="pay-note" value={payNote} onChange={(e) => setPayNote(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 min-h-11 text-fg" />
+                  <VoiceInput label="Note by voice" onResult={(t) => setPayNote(t)} />
+                </div>
+              </div>
               <Button type="submit" disabled={busy}><Send className="h-4 w-4" /> Send</Button>
             </form>
             <div className="my-4 flex items-center gap-3 text-xs text-fg-muted">

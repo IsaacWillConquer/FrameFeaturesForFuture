@@ -4,7 +4,7 @@ import { db } from "../../config/firebase";
 import { COLLECTIONS } from "../../config/appConfig";
 import { useAuth } from "../auth/AuthProvider";
 
-const DEFAULTS = { textSize: "normal", contrast: false, dark: false, reduceMotion: false, dyslexia: false };
+const DEFAULTS = { textSize: "normal", contrast: false, dark: false, reduceMotion: false, dyslexia: false, ttsRate: 1 };
 const SIZES = { normal: "100%", large: "120%", xlarge: "140%" };
 const A11yContext = createContext(null);
 

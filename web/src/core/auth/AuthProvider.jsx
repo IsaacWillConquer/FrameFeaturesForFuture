@@ -78,6 +78,7 @@ export function AuthProvider({ children }) {
     verified,
     totpEnabled,
     twoFactorPassed,
+    mustChangePassword: profile?.mustChangePassword === true,
     profileError,
     loading,
     refresh,

@@ -5,6 +5,7 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import VerifyEmail from "../pages/VerifyEmail";
 import TwoFactorVerify from "../pages/TwoFactorVerify";
+import ChangePasswordRequired from "../pages/ChangePasswordRequired";
 import Dashboard from "../pages/Dashboard";
 import Security from "../pages/Security";
 import Profile from "../pages/Profile";
@@ -36,6 +37,7 @@ export default function AppRoutes() {
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/2fa" element={<TwoFactorVerify />} />
+        <Route path="/change-password" element={<ProtectedRoute><ChangePasswordRequired /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

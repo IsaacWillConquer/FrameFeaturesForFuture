@@ -59,6 +59,8 @@ export async function registerUser(name, email, password) {
   const cred = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(cred.user, { displayName: name });
   await ensureUserDoc(cred.user, name);
+  // Force a first-login change of password (cleared by changePassword).
+  await updateDoc(doc(db, COLLECTIONS.users, cred.user.uid), { mustChangePassword: true });
   await sendEmailVerification(cred.user);
   await logAction(cred.user.uid, "register");
   return cred.user;
@@ -110,5 +112,7 @@ export async function changePassword(currentPassword, newPassword) {
   const cred = EmailAuthProvider.credential(u.email, currentPassword);
   await reauthenticateWithCredential(u, cred);
   await updatePassword(u, newPassword);
+  // Clears the first-login flag so the app opens (see ChangePasswordRequired).
+  await updateDoc(doc(db, COLLECTIONS.users, u.uid), { mustChangePassword: false });
   await logAction(u.uid, "password_change");
 }

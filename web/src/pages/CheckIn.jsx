@@ -15,6 +15,7 @@ import EmptyState from "../core/ui/EmptyState";
 import Spinner from "../core/ui/Spinner";
 import Avatar from "../core/ui/Avatar";
 import FormField from "../core/ui/FormField";
+import VoiceInput from "../core/a11y/VoiceInput";
 
 export default function CheckIn() {
   const { user, profile, role } = useAuth();
@@ -69,8 +70,14 @@ export default function CheckIn() {
           <CardHeader title="Check in now" />
           <CardBody>
             <form onSubmit={handleCheckIn}>
-              <FormField id="checkin-note" label="Purpose (optional)" value={note}
-                onChange={(e) => setNote(e.target.value)} placeholder="e.g. Consultation" />
+              <div className="mb-4">
+                <label htmlFor="checkin-note" className="mb-1 block font-medium text-fg">Purpose (optional)</label>
+                <div className="flex gap-2">
+                  <input id="checkin-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Consultation"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 min-h-11 text-fg" />
+                  <VoiceInput label="Purpose by voice" onResult={(t) => setNote(t)} />
+                </div>
+              </div>
               <Button type="submit"><LogIn className="h-4 w-4" /> Check in</Button>
             </form>
 

@@ -47,6 +47,18 @@ export default function Accessibility() {
             <Check id="dys" label="Dyslexia-friendly spacing" checked={prefs.dyslexia} onChange={(v) => update({ dyslexia: v })} />
           </CardBody>
         </Card>
+
+        <Card>
+          <CardHeader title="Read aloud speed" />
+          <CardBody>
+            <label htmlFor="tts-rate" className="mb-1 block font-medium text-fg">
+              Speed: {(prefs.ttsRate || 1).toFixed(1)}×
+            </label>
+            <input id="tts-rate" type="range" min="0.7" max="1.5" step="0.1" value={prefs.ttsRate || 1}
+              onChange={(e) => update({ ttsRate: Number(e.target.value) })} className="w-full" aria-label="Read aloud speed" />
+            <p className="text-xs text-fg-muted">Used by the Read aloud buttons and the read-page button in the top bar.</p>
+          </CardBody>
+        </Card>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-4">

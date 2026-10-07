@@ -1,9 +1,12 @@
 // Text-to-speech and voice input using the browser's Web Speech API (free).
 // Speech recognition works in Chrome/Edge only and needs HTTPS or localhost.
-export function speak(text) {
+export function speak(text, { rate, onEnd } = {}) {
   if (!("speechSynthesis" in window)) return false;
   window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  const u = new SpeechSynthesisUtterance(text);
+  if (rate) u.rate = rate;
+  if (onEnd) u.onend = () => onEnd();
+  window.speechSynthesis.speak(u);
   return true;
 }
 

@@ -13,6 +13,7 @@ import Badge from "../core/ui/Badge";
 import EmptyState from "../core/ui/EmptyState";
 import FormField from "../core/ui/FormField";
 import { TableWrap, default as Table, Th, Td } from "../core/ui/Table";
+import VoiceInput from "../core/a11y/VoiceInput";
 
 // SIMULATED SMS. Messages are saved to sms_outbox instead of being sent.
 // Staff/admin can read the outbox; any signed-in user can "send".
@@ -59,8 +60,11 @@ export default function SmsOutbox() {
                 onChange={(e) => setTo(e.target.value)} required placeholder="+63 900 000 0000" />
               <div className="mb-4">
                 <label htmlFor="sms-msg" className="mb-1 block font-medium text-fg">Message</label>
-                <textarea id="sms-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={4} required
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg" />
+                <div className="flex items-start gap-2">
+                  <textarea id="sms-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={4} required
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg" />
+                  <VoiceInput label="Message by voice" onResult={(t) => setMessage(t)} />
+                </div>
               </div>
               <Button type="submit" disabled={busy}><Send className="h-4 w-4" /> {busy ? "Saving..." : "Send (simulated)"}</Button>
             </form>

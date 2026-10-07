@@ -44,6 +44,8 @@ export default function TwoFactorVerify() {
         passTwoFactor();
         navigate("/dashboard");
       } else {
+        // Failed attempts can be audit-logged here (the user IS signed in).
+        await logAction(user.uid, "2fa_failed", recovery ? "recovery code" : "authenticator");
         setError("That code is not correct.");
       }
     } catch {
