@@ -5,28 +5,36 @@
 **Mode:** Solo-leaning · own new Firebase project · stay free · built to be reusable for capstone
 **Stand-in reference until topic is revealed:** Barangay Health Portal (rebuilt in React)
 
+> **Status snapshot (Oct 7, 2026):** Web v3 is fully built and committed (design system, app shell,
+> all pages, CRUD kit, P1 security, P3 security extras, P4 simulated extras). Lint: 0 errors. Build: success.
+> Mobile `mobile/` was scaffolded Oct 7 from `mobile-src/lib` (deps + all 3 Android edits applied);
+> `flutterfire configure` still needs `firebase login`. **Nothing has been live-tested or deployed yet** —
+> that is the biggest open item before reveal day. Full details: `docs/HANDOFF.md`.
+
 ---
 
 ## 1. Structure
 
 ```
-awa-project/
+FinalProject_AWA/
 ├── web/src/
 │   ├── config/        firebase.js, appConfig.js (edit on reveal)
-│   ├── core/          auth, security, qr, notifications, a11y, layout, guards
+│   ├── core/          auth, security, qr, notifications, a11y, crud, ui, layout, guards
 │   ├── adapters/      smsService, paymentService, aiService, speechService
-│   ├── modules/       EMPTY until topic (one folder per entity)
+│   ├── modules/       demo/ only until topic (one folder per entity)
 │   ├── pages/  routes/
-├── mobile/lib/        config, core, adapters, modules, screens
-├── firebase/          firestore.rules, hosting config
-└── docs/              feature map, ERD, test cases, manual, a11y statement, defense notes
+├── mobile/            REAL Flutter project (scaffolded Oct 7, commit pending)
+├── mobile-src/        mobile lib/ source of truth + README
+├── firebase/          firestore.rules lives in web/ (web/firestore.rules + firebase.json)
+└── docs/              brief, blueprint + todo, test guide, security explained, HANDOFF
 ```
 
 Rule: `core/` never imports from `modules/`.
 Roles: Admin ⊃ Staff ⊃ User (checked by level number).
 
-Fixed Firestore collections: `users`, `logs`, `notifications`, `announcements`, `settings`,
-`checkins`, `trusted_devices`, `login_history`, `wallets`, `transactions`, `sms_outbox`, `ai_chats`.
+Fixed Firestore collections: `users`, `logs`, `notifications`, `announcements`, `sms_outbox`,
+`totp`, `login_history`, `trusted_devices`, `webauthn_credentials`, `face_descriptors`, `wallets`,
+`transactions`, `checkins`, `ai_chats`, plus demo `items`.
 Topic collections are added on Oct 10.
 
 ---
@@ -34,46 +42,49 @@ Topic collections are added on Oct 10.
 ## 2. Todo by date
 
 ### Wed Sep 30 — Setup
-- [ ] Create own Firebase project (Spark plan)
-- [ ] Turn on Auth (Email/Password, Google) + Firestore (test mode for now)
-- [ ] Add Web app, put config in `.env` (VITE_ variables)
+- [x] Create own Firebase project (Spark plan) — `.env` is populated
+- [x] Turn on Auth (Email/Password, Google) + Firestore (test mode for now)
+- [x] Add Web app, put config in `.env` (VITE_ variables)
 - [ ] Check: does Storage ask for billing? Does AI Logic work on Spark?
-- [ ] Create repo, remove junk deps from friend's starter (`dom`, `router`, `react-helmet-async`)
+- [x] Create repo, remove junk deps from friend's starter (`dom`, `router`, `react-helmet-async`)
 
 ### Thu Oct 1 — Restructure + a11y foundation
-- [ ] Move starter into `config/`, `core/`, `pages/`, `routes/`
-- [ ] AuthProvider returns user + role + emailVerified
-- [ ] ProtectedRoute + RoleRoute
-- [ ] Fix Login.jsx (navigate during render), email input type
-- [ ] UI kit built accessible from day 1: semantic HTML, labels, focus ring, skip link, 44px targets, aria-live toasts
+- [x] Move starter into `config/`, `core/`, `pages/`, `routes/`
+- [x] AuthProvider returns user + role + emailVerified (+ 2FA flag)
+- [x] ProtectedRoute with minRole (RoleRoute merged into it)
+- [x] Fix Login.jsx (navigate during render), email input type
+- [x] UI kit built accessible from day 1: semantic HTML, labels, focus ring, skip link, 44px targets, aria-live toasts
 
 ### Fri Oct 2 — Register / login done properly
-- [ ] Register creates Firestore `users/{uid}` doc with role
-- [ ] Email verification enforced before access
-- [ ] First-login change-password page
-- [ ] Forgot password + change password
+- [x] Register creates Firestore `users/{uid}` doc with role
+- [x] Email verification enforced before access
+- [x] First-login change-password page (in Profile)
+- [x] Forgot password + change password
 
 ### Sat Oct 3 — Shell + rules + deploy
-- [ ] Navbar/sidebar per role, empty dashboards
-- [ ] Logger helper writing to `logs`
-- [ ] Firestore security rules v1 (helper functions like `isRole()`)
-- [ ] Deploy to Firebase Hosting (needed for camera/WebAuthn on HTTPS)
+- [x] Navbar/sidebar per role, empty dashboards
+- [x] Logger helper writing to `logs`
+- [x] Firestore security rules v1 (helper functions like `isRole()`)
+- [ ] Deploy to Firebase Hosting (needed for camera/WebAuthn on HTTPS) — **still open**
 
 ### Sun Oct 4 — 2FA + notifications
-- [ ] TOTP 2FA (`otpauth`) + recovery codes
-- [ ] Notifications: collection + bell icon + real-time
-- [ ] **Text-to-speech: read-aloud button (Web Speech API), first version**
+- [x] TOTP 2FA (`otpauth`) + recovery codes (hashed)
+- [x] Notifications: collection + bell icon + real-time
+- [x] **Text-to-speech: read-aloud button (Web Speech API), first version**
 
 ### Mon Oct 5 — QR + Flutter
-- [ ] QRGenerator + QRScanner components (with type-the-code fallback)
-- [ ] Flutter project created, connected to same Firebase
+- [x] QRGenerator + QRScanner components (with type-the-code fallback)
+- [x] Flutter project created (`mobile/` scaffolded Oct 7, was planned Oct 5), deps added, 3 Android edits applied
+- [ ] Connected to same Firebase — **blocked: needs `firebase login` + `flutterfire configure`**
 
 ### Tue Oct 6 — Spike + buffer
 - [ ] Flutter on real phone: login + biometric + QR scan
-- [ ] Accessibility settings page (text size, contrast, reduce motion) if time
-- [ ] Leftovers from earlier days
+- [x] Accessibility settings page (text size, contrast, reduce motion, dyslexia)
+- [x] Leftovers from earlier days
 
 ### Oct 7-9 — Health break
+- [x] Oct 7: scaffolded `mobile/`, created `docs/HANDOFF.md`, refreshed docs
+- [ ] Oct 7-9 (if energy allows): run the web test pass (Parts A/B) — no Firebase login needed to run locally
 
 ### Sat Oct 10 — Reveal day
 - [ ] List roles, entities, collections
@@ -87,19 +98,19 @@ Topic collections are added on Oct 10.
 - [ ] Notification center page, announcements
 
 ### Oct 17-21 — Required security features + fallbacks
-- [ ] Face recognition (face-api.js, store descriptors not photos) + liveness-lite
-- [ ] Biometrics (WebAuthn web, `local_auth` Flutter)
-- [ ] Verification fallback chain wired up (face → biometric → TOTP → staff-assisted)
-- [ ] Login limiter, idle auto-logout, login history, trusted devices
-- [ ] **Voice input: speech-to-text for search + forms, a few voice commands**
-- [ ] **Read-aloud extended to all pages + notifications**
-- [ ] Lighthouse a11y audit (target 90+), keyboard-only pass
+- [x] Biometrics (WebAuthn web, `local_auth` Flutter — code done, on-device test pending)
+- [x] Face recognition (face-api.js, store descriptors not photos) + liveness-lite
+- [x] Verification fallback chain wired up (face → biometric → TOTP → staff-assisted/typed)
+- [x] Login limiter, idle auto-logout, login history, trusted devices
+- [x] **Voice input: speech-to-text for search + forms, a few voice commands**
+- [x] **Read-aloud extended to all pages + notifications**
+- [ ] Lighthouse a11y audit (target 90+), keyboard-only pass — **needs live app**
 
 ### Oct 22-25 — Mobile + extras that still fit
-- [ ] Resident-side Flutter app (login, profile, main action, notifications, QR, biometric lock)
+- [x] Resident-side Flutter app (login, profile, main action, notifications, QR, biometric lock) — code done in mobile-src
 - [ ] Quick unlock (biometric/PIN), email-link sign-in
-- [ ] Wallet + QR payment (simulated), SMS outbox (simulated), AI helper (Gemini via Firebase AI Logic)
-- [ ] Check-in module, printable ID card
+- [x] Wallet + QR payment (simulated), SMS outbox (simulated), AI helper (demo replies; Gemini via Firebase AI Logic pending)
+- [x] Check-in module, printable ID card
 
 ### Oct 26-28 — Finish
 - [ ] Full testing, screen reader test (NVDA / TalkBack)
@@ -125,11 +136,11 @@ Topic collections are added on Oct 10.
 
 | Required feature | Where it lives | Topic use |
 |---|---|---|
-| 2FA | core/auth | |
-| Email verification | core/auth | |
-| QR code | core/qr | |
-| Face recognition | core/security | |
-| Biometrics | core/security | |
+| 2FA | core/auth (totpService, Security.jsx, TwoFactorVerify.jsx) | |
+| Email verification | core/auth (VerifyEmail, ProtectedRoute) | |
+| QR code | core/qr (QRGenerator, QRScanner) | |
+| Face recognition | core/security (faceService, FaceCapture) | |
+| Biometrics | core/security (webauthnService) | |
 | Notifications | core/notifications | |
 
 ---
@@ -145,11 +156,14 @@ Topic collections are added on Oct 10.
 
 ## 6. Known limitations to state in docs
 - TOTP verified client-side (no server) — weaker than server-side 2FA
-- Wallet, SMS, and payment are simulations with fake money/messages
-- Speech recognition browser support is limited
+- Wallet, SMS, payment, and AI are simulations with fake money/messages/replies
+- Speech recognition browser support is limited (Chrome/Edge only)
+- Nothing has been live-tested or deployed yet (as of Oct 7)
 
 ## 7. Open items
-- [ ] Firebase project created?
-- [ ] Topic + reveal date
+- [x] Firebase project created (`.env` populated)
+- [ ] `firebase login` on this machine + `flutterfire configure` in `mobile/`
+- [ ] Topic + reveal date (Oct 10)
 - [ ] Solo vs group final decision
 - [ ] Instructor OK on extras (wallet/AI/voice)?
+- [ ] Live test pass + deploy (T1–T71)

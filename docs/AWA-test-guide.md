@@ -1,6 +1,9 @@
-# AWA test guide (web v3 + mobile v2)
+# AWA test guide (web v4 + mobile v2)
 
 Goal: find what's broken, not fix it. Tick the box if it passes. If it fails, write the test ID, what you expected, what happened, and the exact error (see Part E). Send me the list.
+
+> Nothing has been live-tested yet (as of Oct 7, 2026) — this whole guide is open. Current state
+> and commands: `docs/HANDOFF.md`.
 
 ---
 
@@ -132,15 +135,33 @@ You need **three accounts** to test roles. Use real emails you can open (a Gmail
 - [ ] **T70** On the live URL: register or log in. Expect: works
 - [ ] **T71** On your PHONE, open the live URL and test the **QR camera scan** (this is the real camera test)
 
+### B12. Biometrics, face, wallet, SMS, AI, check-in (v4 features)
+Most of these need **HTTPS or localhost** (camera/WebAuthn). Run before or after deploy.
+- [ ] **T72** `/biometrics` on localhost or the live URL: "Biometrics supported" shows yes; **Register biometric** uses your device fingerprint/face (Windows Hello / phone)
+- [ ] **T73** After registering, **Verify with biometrics** succeeds; removing the credential in `/devices` makes it fail again
+- [ ] **T74** **Enroll face** at `/biometrics` (webcam on). Then `/verify-identity` > **Use face** passes. Firestore `face_descriptors` has your row (data only, NO image)
+- [ ] **T75** Deny camera / no camera. Expect: "Camera unavailable" message and the other verification methods still work
+- [ ] **T76** `/verify-identity` shows the **fallback chain**: face → biometrics → 2FA code → type-the-code. Each alternative works
+- [ ] **T77** `/devices` lists this browser as trusted. **Remove** works and it re-asks next time
+- [ ] **T78** `/wallet`: shows a starting balance (500). **Top up** adds to it; `transactions` shows the row
+- [ ] **T79** **Pay** another user (pick from the list): your balance drops, theirs rises, BOTH see `payment_sent` / `payment_received` rows
+- [ ] **T80** Pay more than your balance. Expect: "Not enough balance" error
+- [ ] **T81** As staff/admin: `/admin/sms` > send. Expect: row in `sms_outbox` with `status: simulated` (no real SMS)
+- [ ] **T82** `/ai`: ask anything. Expect: a demo reply (simulated). Note: goes live only if `VITE_AI_ENDPOINT` is set
+- [ ] **T83** `/check-in`: check in with a note. Expect: your row listed, and the **ID card** opens for print
+- [ ] **T84** **Voice input**: click a mic button in Chrome/Edge on localhost or HTTPS, speak, text lands in the field. (Firefox: button says unsupported — that's fine)
+- [ ] **T85** CSV/print: on `/admin/users`, `/admin/logs`, `/items` the **export/print** buttons download a CSV or open the print dialog
+
 ---
 
-## Part C. Mobile setup and tests (do on Oct 6, or when ready)
+## Part C. Mobile setup and tests (when ready — `mobile/` is scaffolded, see C1)
 
 ### C1. Setup
-- [ ] Flutter 3.16+ installed, `flutter doctor` is green for Android
-- [ ] Follow `mobile/README.md` step by step (flutter create, copy `lib/`, `flutterfire configure`, `flutter pub add ... otp crypto`, the 3 Android edits)
+- [ ] Flutter 3.16+ installed (`flutter doctor` green for Android). **Confirmed Oct 7: Flutter 3.35.5 / Dart 3.9.2**
+- [ ] `mobile/` was **already scaffolded Oct 7**: `flutter create --org com.awa --project-name awa_mobile mobile`, `mobile-src/lib/` copied over, deps added (`firebase_core firebase_auth cloud_firestore local_auth mobile_scanner otp crypto`), and all 3 Android edits applied (minSdk 23, `USE_BIOMETRIC`, `FlutterFragmentActivity`). Don't redo these
+- [ ] Remaining: `firebase login`, then in `mobile/`: `dart pub global activate flutterfire_cli` (done) + `flutterfire configure` (pick your AWA Firebase project, Android only). This creates `lib/firebase_options.dart`
 - [ ] Phone with USB debugging on, shows in `flutter devices`
-- [ ] `flutter run`: app opens on the phone
+- [ ] `flutter run`: app opens on the phone (no Android device/emulator was connected on Oct 7)
 
 ### C2. Mobile tests
 - [ ] **M1** Log in with a verified account. Expect: goes through to the biometric lock

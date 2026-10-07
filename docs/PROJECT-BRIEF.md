@@ -11,22 +11,38 @@
 - **Rule:** `core/` never imports from `modules/`. Topic stuff lives only in `modules/`.
 
 ## Step 2: schema (locked)
-| Collection | Fields |
-|---|---|
-| `users/{uid}` | email, name, role, active, prefs{textSize, dark, contrast, reduceMotion, dyslexia}, createdAt |
-| `logs/{auto}` | uid, action, details, createdAt |
-| `notifications/{auto}` | userId, title, message, read, createdAt |
-| `totp/{uid}` | secret, enabled, recovery[] (hashes), createdAt |
-| `sms_outbox/{auto}` | to, message, status, createdAt |
-| `items/{auto}` (demo only) | name, category, quantity, notes, createdBy, createdAt, updatedAt |
 
-Planned, not built yet: `faces/{uid}`, `wallets`, `transactions`, `ai_chats`, `checkins`.
-Topic collections: decided on reveal day, before any topic code.
+| Collection | Fields | Status |
+|---|---|---|
+| `users/{uid}` | email, name, role, active, prefs{textSize, dark, contrast, reduceMotion, dyslexia}, createdAt | built |
+| `logs/{auto}` | uid, action, details, createdAt | built |
+| `notifications/{auto}` | userId, title, message, read, createdAt | built |
+| `totp/{uid}` | secret, enabled, recovery[] (hashes), createdAt | built |
+| `sms_outbox/{auto}` | to, message, status, createdAt | built (simulated) |
+| `items/{auto}` (demo only) | name, category, quantity, notes, createdBy, createdAt, updatedAt | built |
+| `announcements/{auto}` | title, body, createdAt | built |
+| `trusted_devices/{auto}`, `login_history/{auto}` | owner-only rows | built |
+| `webauthn_credentials/{auto}`, `face_descriptors/{auto}` | owner-only, descriptors not photos | built |
+| `wallets/{uid}`, `transactions/{auto}` | simulated balance + ledger | built (simulated) |
+| `checkins/{auto}`, `ai_chats/{auto}` | check-in rows, chat history | built (simulated) |
+
+Planned, not built yet: topic collections (decided on reveal day, before any topic code).
 
 ## Build order (steps 3 to 6)
-1. Early bare-bones deploy (what exists now)
-2. **User slice**, tested live: register, verify, login, 2FA, notifications, accessibility
-3. **Staff slice:** items CRUD, user list, audit log
-4. **Admin slice:** role changes, deactivate
-5. One feature per request after that: face, biometrics, wallet, SMS, AI. Commit a checkpoint before each.
-6. Reveal day: static page skeletons per entity first, then logic, one role at a time
+
+| Step | What | Status (Oct 7, 2026) |
+|---|---|---|
+| 3.1 | Early bare-bones deploy | superseded — full app built first |
+| 3.2 | **User slice**: register, verify, login, 2FA, notifications, accessibility | code done, NOT live-tested (T1–T65) |
+| 3.3 | **Staff slice:** items CRUD, user list, audit log | code done |
+| 3.4 | **Admin slice:** role changes, deactivate | code done |
+| 4 | One feature per request: face, biometrics, wallet, SMS, AI | done (face/biometrics/wallet/SMS/AI built) |
+| 5 | Mobile app | scaffolded Oct 7 (`mobile/` created, deps + Android edits applied); remaining: `flutterfire configure` (needs `firebase login`) + on-device run/tests (M1–M13) |
+| 6 | Reveal day: static page skeletons per entity first, then logic, one role at a time | Oct 10 |
+
+## Current snapshot (Oct 7, 2026)
+
+- Web v3 fully built (design system, all pages, P1 security, P4 simulated extras). Lint: 0 errors. Build: success.
+- Mobile `mobile/` scaffolded from `mobile-src/lib`; `firebase_options.dart` still needs `flutterfire configure`.
+- Not done: live test pass (docs/AWA-test-guide.md T1–T71), deploy to Hosting, topic modules.
+- Full current state + next steps: `docs/HANDOFF.md`.
