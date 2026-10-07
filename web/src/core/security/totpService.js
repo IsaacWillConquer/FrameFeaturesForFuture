@@ -1,5 +1,5 @@
 import * as OTPAuth from "otpauth";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { COLLECTIONS, APP_NAME } from "../../config/appConfig";
 
@@ -67,14 +67,19 @@ export function disableTotp(uid) {
   return deleteDoc(doc(db, COLLECTIONS.totp, uid));
 }
 
-// Returns true and burns the code if it matches
+// Returns true and burns the code if it matches. A transaction so two devices
+// (web + phone, or two tabs) can't both burn the same code at once.
 export async function consumeRecoveryCode(uid, code) {
-  const data = await getTotp(uid);
-  if (!data) return false;
   const hash = await sha256(code);
-  if (!data.recovery.includes(hash)) return false;
-  await updateDoc(doc(db, COLLECTIONS.totp, uid), {
-    recovery: data.recovery.filter((h) => h !== hash),
+  const ref = doc(db, COLLECTIONS.totp, uid);
+  let ok = false;
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const recovery = snap.data().recovery || [];
+    if (!recovery.includes(hash)) return;
+    ok = true;
+    tx.update(ref, { recovery: recovery.filter((h) => h !== hash) });
   });
-  return true;
+  return ok;
 }

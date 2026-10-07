@@ -29,7 +29,8 @@ export default function Modal({ open, onClose, title, children, className }) {
     >
       <div className="flex items-center justify-between border-b border-border p-4">
         <h2 className="text-lg font-semibold">{title}</h2>
-        <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-2 text-fg-muted hover:bg-surface-2">
+        <button type="button" onClick={onClose} aria-label="Close"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-fg-muted hover:bg-surface-2">
           ✕
         </button>
       </div>

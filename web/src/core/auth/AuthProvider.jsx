@@ -13,15 +13,19 @@ export function AuthProvider({ children }) {
   const [verified, setVerified] = useState(false);
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [twoFactorPassed, setTwoFactorPassed] = useState(false);
+  const [profileError, setProfileError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function loadProfile(u) {
     try {
       const snap = await getDoc(doc(db, COLLECTIONS.users, u.uid));
       setProfile(snap.exists() ? snap.data() : null);
+      setProfileError(false);
     } catch (err) {
+      // Fail closed: without the profile the gates stay shut, like on mobile.
       console.error("Could not load profile:", err);
       setProfile(null);
+      setProfileError(true);
     }
     try {
       const totpSnap = await getDoc(doc(db, COLLECTIONS.totp, u.uid));
@@ -45,6 +49,7 @@ export function AuthProvider({ children }) {
         setVerified(false);
         setTotpEnabled(false);
         setTwoFactorPassed(false);
+        setProfileError(false);
       }
       setLoading(false);
     });
@@ -73,6 +78,7 @@ export function AuthProvider({ children }) {
     verified,
     totpEnabled,
     twoFactorPassed,
+    profileError,
     loading,
     refresh,
     passTwoFactor,

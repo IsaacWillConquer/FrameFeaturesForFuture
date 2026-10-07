@@ -46,6 +46,10 @@ export default function Security() {
     setError("");
     try {
       const data = await getTotp(user.uid);
+      if (!data) {
+        setError("Could not load your 2FA settings. Try again.");
+        return;
+      }
       if (!checkCode(data.secret, code)) {
         setError("That code is not correct.");
         return;

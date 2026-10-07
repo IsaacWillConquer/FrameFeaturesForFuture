@@ -28,7 +28,8 @@ async function trackLogin(uid, detail) {
 const messages = {
   "auth/invalid-credential": "Wrong email or password.",
   "auth/email-already-in-use": "That email is already registered.",
-  "auth/weak-password": "Password must be at least 6 characters.",
+  "auth/account-exists-with-different-credential": "That email is already registered with a password. Log in with your password instead.",
+  "auth/weak-password": "Password must be at least 8 characters.",
   "auth/too-many-requests": "Too many tries. Wait a bit and try again.",
   "auth/popup-closed-by-user": "Google sign-in was closed.",
   "auth/invalid-email": "That email doesn't look right.",

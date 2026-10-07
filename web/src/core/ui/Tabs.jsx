@@ -1,11 +1,11 @@
 import { cx } from "./cx";
 
 // Tabs with proper ARIA roles. tabs: [{ id, label, content }]
-export default function Tabs({ tabs, active, onChange, className }) {
+export default function Tabs({ tabs, active, onChange, className, label = "Sections" }) {
   const current = active ?? tabs[0]?.id;
   return (
     <div className={className}>
-      <div role="tablist" aria-label="Sections" className="flex flex-wrap gap-1 border-b border-border">
+      <div role="tablist" aria-label={label} className="flex flex-wrap gap-1 border-b border-border">
         {tabs.map((t) => (
           <button
             key={t.id}

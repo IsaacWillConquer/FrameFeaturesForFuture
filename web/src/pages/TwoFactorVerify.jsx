@@ -32,6 +32,11 @@ export default function TwoFactorVerify() {
         ok = await consumeRecoveryCode(user.uid, code);
       } else {
         const data = await getTotp(user.uid);
+        if (!data) {
+          setError("Could not load your 2FA settings. Log out and back in.");
+          setBusy(false);
+          return;
+        }
         ok = checkCode(data.secret, code);
       }
       if (ok) {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Bot, User as UserIcon } from "lucide-react";import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } from "firebase/firestore";
+import { Send, Bot, User as UserIcon } from "lucide-react";
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { COLLECTIONS } from "../config/appConfig";
 import { useAuth } from "../core/auth/AuthProvider";
@@ -24,14 +25,16 @@ export default function AiHelper() {
   useEffect(() => {
     async function load() {
       try {
+        // No orderBy: that would need a composite index. Sort here instead.
         const snap = await getDocs(query(
           collection(db, COLLECTIONS.aiChats),
-          where("uid", "==", user.uid),
-          orderBy("createdAt", "asc")
+          where("uid", "==", user.uid)
         ));
-        setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        list.sort((a, b) => (a.createdAt?.toMillis?.() ?? 0) - (b.createdAt?.toMillis?.() ?? 0));
+        setMessages(list);
       } catch {
-        setMessages([]);
+        setError("Could not load chat history. Check your connection and Firestore rules.");
       }
       setLoading(false);
     }

@@ -32,7 +32,8 @@ export default function Sidebar({ open, onClose }) {
             <p className="text-lg font-bold text-fg">{APP_NAME}</p>
             <p className="text-xs text-fg-muted">{APP_TAGLINE}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close menu" className="rounded-md p-2 text-fg-muted hover:bg-surface-2 lg:hidden">
+          <button type="button" onClick={onClose} aria-label="Close menu"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-fg-muted hover:bg-surface-2 lg:hidden">
             <X className="h-5 w-5" />
           </button>
         </div>

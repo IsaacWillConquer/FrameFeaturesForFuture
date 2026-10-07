@@ -28,6 +28,7 @@ export default function Biometrics() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [showFace, setShowFace] = useState(false);
+  const [faceMode, setFaceMode] = useState("enroll"); // "enroll" replaces, "test" verifies
 
   async function load() {
     setLoading(true);
@@ -74,6 +75,8 @@ export default function Biometrics() {
   async function enrollFace(descriptor) {
     setBusy(true); setError(""); setMessage("");
     try {
+      // Replace any previous enrollment so descriptors don't pile up.
+      await Promise.all(faces.map((f) => removeFace(f.id)));
       await registerFace(user.uid, descriptor);
       await logAction(user.uid, "face_enroll");
       setMessage("Face enrolled. Only the numeric descriptor is stored, never a photo.");
@@ -96,9 +99,8 @@ export default function Biometrics() {
   }
 
   async function testFace(descriptor) {
-    const f = faces[0];
-    if (!f) return;
-    const match = await compareFace(descriptor, f.descriptor);
+    if (faces.length === 0) return;
+    const match = faces.some((f) => compareFace(descriptor, f.descriptor));
     setShowFace(false);
     if (match) {
       await recordFaceCheck(user.uid, true);
@@ -159,7 +161,7 @@ export default function Biometrics() {
             title="Face recognition"
             description="Stores a numeric face descriptor, never a photo."
             actions={faceRecognitionSupported() && (
-              <Button onClick={() => setShowFace(true)} disabled={busy}>
+              <Button onClick={() => { setFaceMode("enroll"); setShowFace(true); }} disabled={busy}>
                 <ScanFace className="h-4 w-4" /> {faces.length ? "Re-enroll" : "Enroll"}
               </Button>
             )}
@@ -168,7 +170,7 @@ export default function Biometrics() {
             {!faceRecognitionSupported() ? (
               <Alert type="warning">Face recognition isn't available in this browser (needs a camera + WebGL).</Alert>
             ) : showFace ? (
-              <FaceCapture onCapture={faces.length ? testFace : enrollFace} onCancel={() => setShowFace(false)} />
+              <FaceCapture onCapture={faceMode === "test" ? testFace : enrollFace} onCancel={() => setShowFace(false)} />
             ) : loading ? (
               <div className="flex justify-center p-4"><Spinner /></div>
             ) : faces.length === 0 ? (
@@ -178,8 +180,12 @@ export default function Biometrics() {
                 <p className="text-fg-muted">
                   Face enrolled. {faces.length} descriptor{faces.length > 1 ? "s" : ""} on file.
                 </p>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <Badge variant="success">Enrolled</Badge>
+                  <button type="button" onClick={() => { setFaceMode("test"); setShowFace(true); }}
+                    className="text-sm text-primary underline min-h-11">
+                    Test face match
+                  </button>
                   {faces.map((f) => (
                     <button key={f.id} onClick={() => removeFaceEnrollment(f)} className="text-sm text-danger underline min-h-11">
                       Remove enrollment

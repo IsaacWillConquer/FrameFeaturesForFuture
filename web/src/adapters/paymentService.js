@@ -1,5 +1,5 @@
 import {
-  addDoc, collection, doc, getDoc, getDocs, increment, query, serverTimestamp, setDoc, updateDoc, where,
+  addDoc, collection, doc, getDoc, getDocs, increment, query, serverTimestamp, setDoc, where, writeBatch,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { COLLECTIONS } from "../config/appConfig";
@@ -34,10 +34,11 @@ export async function payTo(fromUid, toUid, amount, note) {
   const wallet = await getWallet(fromUid);
   if (wallet.balance < value) throw new Error("Not enough balance.");
 
-  const batch = [];
-  batch.push(updateDoc(doc(db, COLLECTIONS.wallets, fromUid), { balance: increment(-value) }));
-  batch.push(setDoc(doc(db, COLLECTIONS.wallets, toUid), { balance: increment(value), uid: toUid }, { merge: true }));
-  await Promise.all(batch);
+  // One atomic batch: the debit and credit either both happen or neither does.
+  const batch = writeBatch(db);
+  batch.update(doc(db, COLLECTIONS.wallets, fromUid), { balance: increment(-value) });
+  batch.set(doc(db, COLLECTIONS.wallets, toUid), { balance: increment(value), uid: toUid }, { merge: true });
+  await batch.commit();
 
   await addDoc(collection(db, COLLECTIONS.transactions), {
     uid: fromUid,

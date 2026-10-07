@@ -40,7 +40,10 @@ export function recordLogin(uid, detail = "web") {
 
 export async function getLoginHistory(uid) {
   const snap = await getDocs(query(collection(db, COLLECTIONS.loginHistory), where("uid", "==", uid)));
-  const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const list = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    // Face checks are recorded here too (deviceId "face") but are not logins.
+    .filter((l) => l.deviceId !== "face");
   list.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0));
   return list.slice(0, 20);
 }

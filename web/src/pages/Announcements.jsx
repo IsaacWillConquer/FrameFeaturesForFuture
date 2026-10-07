@@ -103,7 +103,7 @@ export default function Announcements() {
                   </div>
                   {canPost && (
                     <button onClick={() => setPendingDelete(a)} aria-label={`Delete ${a.title}`}
-                      className="rounded-md p-2 text-danger hover:bg-surface-2">
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-danger hover:bg-surface-2">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   )}

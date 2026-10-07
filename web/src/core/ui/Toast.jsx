@@ -36,7 +36,8 @@ export function ToastProvider({ children }) {
             )}
           >
             <span className="text-sm">{t.message}</span>
-            <button type="button" onClick={() => dismiss(t.id)} aria-label="Dismiss" className="text-fg-muted hover:text-fg">
+            <button type="button" onClick={() => dismiss(t.id)} aria-label="Dismiss"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center text-fg-muted hover:text-fg">
               ✕
             </button>
           </div>

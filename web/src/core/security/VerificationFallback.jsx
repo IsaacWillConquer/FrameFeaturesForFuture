@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Fingerprint, LifeBuoy } from "lucide-react";
 import { unlockWithBiometric, biometricsSupported } from "./webauthnService";
-import { compareFace } from "./faceService";
-import { getFaceDescriptors } from "./faceService";
+import { compareFace, getFaceDescriptors } from "./faceService";
 import { getTotp, checkCode } from "./totpService";
 import { recordFaceCheck } from "./livenessService";
 import Tabs from "../ui/Tabs";
