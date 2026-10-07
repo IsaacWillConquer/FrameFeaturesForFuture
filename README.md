@@ -17,13 +17,16 @@ state, run commands, conventions, gotchas, and next steps in one place.
 
 ## Status (Oct 7, 2026)
 
-- **Web v3 built and committed:** design system, app shell, all pages, CRUD kit, P1 security
-  (email verification, 2FA, QR, face, biometrics, fallback chain, notifications) and P4 extras
-  (wallet, SMS, AI, check-in, voice). Lint: 0 errors. Build: success.
-- **Mobile scaffolded Oct 7:** `mobile/` created from `mobile-src/lib`, deps added, all 3 Android
-  edits applied. Remaining: `firebase login` + `flutterfire configure` (needs your Firebase login),
-  then `flutter run` on a phone.
-- **Not done:** live test pass (T1–T71), deploy to Hosting, topic modules (Oct 10).
+- **Web v3 built + audited + fixed (6 commits):** design system, app shell, all pages, CRUD kit,
+  P1 security (email verification, 2FA, QR, face, biometrics, fallback chain, notifications),
+  security extras, and P4 extras (wallet, SMS, AI, check-in, voice). Plus Oct 7 additions: dashboard
+  charts + admin stats, announcement edit, first-login forced change-password, PWA-lite, TTS
+  stop/rate/read-page, voice input coverage, pagination, liveness-lite, staff notify-user.
+  Lint: 0 errors. Build: success.
+- **Mobile scaffolded + fixed Oct 7:** `mobile/` created from `mobile-src/lib`, deps added, all 3
+  Android edits applied, unhandled-async guards, `AppConfig.appName` everywhere. Remaining:
+  `firebase login` + `flutterfire configure` (needs your Firebase login), then `flutter run` on a phone.
+- **Not done:** live test pass (T1–T95), deploy to Hosting, topic modules (Oct 10).
 
 ## Start here (in this order)
 
@@ -32,7 +35,7 @@ state, run commands, conventions, gotchas, and next steps in one place.
    docs/AWA-test-guide.md Part A
 2. **Web:** in `web/`: `npm install`, copy `.env.example` to `.env`, fill in the Firebase config,
    `npm run dev`
-3. **Test the web app** (test IDs in docs/AWA-test-guide.md: T1–T71), then deploy (Part B11 — needed
+3. **Test the web app** (test IDs in docs/AWA-test-guide.md: T1–T95), then deploy (Part B11 — needed
    for the QR camera and WebAuthn, which require HTTPS)
 4. **Phone:** `mobile/` is scaffolded — finish setup with `mobile-src/README.md` steps 4–7
    (`flutterfire configure` needs `firebase login`), then test Part C (M1–M13)

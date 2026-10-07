@@ -5,11 +5,14 @@
 **Mode:** Solo-leaning · own new Firebase project · stay free · built to be reusable for capstone
 **Stand-in reference until topic is revealed:** Barangay Health Portal (rebuilt in React)
 
-> **Status snapshot (Oct 7, 2026):** Web v3 is fully built and committed (design system, app shell,
-> all pages, CRUD kit, P1 security, P3 security extras, P4 simulated extras). Lint: 0 errors. Build: success.
-> Mobile `mobile/` was scaffolded Oct 7 from `mobile-src/lib` (deps + all 3 Android edits applied);
-> `flutterfire configure` still needs `firebase login`. **Nothing has been live-tested or deployed yet** —
-> that is the biggest open item before reveal day. Full details: `docs/HANDOFF.md`.
+> **Status snapshot (Oct 7, 2026, after audit + fixes):** Web v3 is fully built and committed, plus an
+> Oct 7 code-audit pass: 11 bug fixes (atomic recovery/wallet writes, fail-closed guards, limiter
+> escalation, face + a11y fixes) and 10 features (dashboard charts + admin stats, announcement edit,
+> first-login forced change-password, PWA-lite, TTS stop/rate/read-page, voice input coverage,
+> pagination, 2fa_failed trail, staff notify-user, liveness-lite). Lint: 0 errors. Build: success.
+> Mobile `mobile/` scaffolded + fixed; `flutterfire configure` still needs `firebase login`.
+> **Nothing has been live-tested or deployed yet** — that is the biggest open item before reveal day.
+> Full details: `docs/HANDOFF.md`.
 
 ---
 

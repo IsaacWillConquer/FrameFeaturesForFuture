@@ -45,32 +45,39 @@ FinalProject_AWA/
 
 **Invariant: `core/` never imports from `modules/`.** Topic code lives only in `modules/`.
 
-## 4. Current state (as of Oct 7, 2026)
+## 4. Current state (as of Oct 7, 2026, after audit + fixes)
 
-**Done and committed (2 commits on master, no remote):**
-- Web v3 complete: design system + dark/high-contrast tokens, accessible UI kit, app shell
-  (sidebar/topbar per role), all pages, config-driven CRUD kit (`core/crud/CrudPage.jsx`).
+**Done and committed (6 commits on master, no remote):**
+- Web v3 complete: design system + dark/high-contrast tokens, accessible UI kit, app shell,
+  all pages, config-driven CRUD kit (`core/crud/CrudPage.jsx`).
 - P1 security: email verification enforced, TOTP 2FA + hashed recovery codes, QR gen/scan,
   face recognition (descriptors only), WebAuthn biometrics, verification fallback chain, notifications.
-- Security extras: login limiter (5 tries → 2 min lock), idle auto-logout (warn 13 / logout 15 min),
-  login history, trusted devices, re-verify for sensitive actions.
+- Security extras: login limiter (5 tries, escalating lock 2/4/8 min), idle auto-logout (13/15 min),
+  login history, trusted devices, re-verify page.
 - P4 extras (all simulated): wallet + QR payments, SMS outbox, AI helper (demo replies), check-in + ID card,
   voice input, read-aloud (TTS), CSV/print reports.
-- Lint: **0 errors** (23 warnings, all non-blocking — see §11). Build: success.
-
-**Done today (Oct 7), NOT yet committed:**
-- Scaffolded the real `mobile/` Flutter project (`flutter create --org com.awa --project-name awa_mobile mobile`).
-- Copied `mobile-src/lib/` → `mobile/lib/`, added deps (`firebase_core firebase_auth cloud_firestore
-  local_auth mobile_scanner otp crypto`), applied all 3 Android edits (minSdk 23, USE_BIOMETRIC,
-  FlutterFragmentActivity), replaced the default `widget_test.dart`.
-- `flutter analyze`: only 2 errors remain — the missing `firebase_options.dart` (needs step below).
+- **Oct 7 audit fixes** (`0486d21`): recovery codes burn in a `runTransaction`; wallet transfer is one
+  atomic `writeBatch`; null guards on missing 2FA doc; fail-closed on profile-load error; AI history
+  client-sorted (no composite index); limiter no longer resets + escalates; face re-enroll replaces +
+  testFace checks all; face-check rows filtered from Recent logins; 44px targets; IdleGuard tokens.
+- **Oct 7 features** (`6a68fec`): zero-dep `BarChart` + dashboard 7-day chart + staff system stats;
+  announcement edit (admin-only); first-login forced change-password (`mustChangePassword` flag +
+  `/change-password` gate); PWA-lite (manifest + icon + meta, no service worker); TTS stop toggle +
+  rate slider + read-page button in topbar; voice input in announcements/SMS/wallet/check-in;
+  pagination in CRUD kit + audit log + my activity; `2fa_failed` audit trail; staff notify-user +
+  users search/CSV; liveness-lite (two frames 1s apart, movement check).
+- Mobile (`3d9dafe`, `7349049`): `mobile/` scaffolded from `mobile-src/lib`, deps + 3 Android edits,
+  unhandled-async guards, `AppConfig.appName` used everywhere. `flutter analyze`: only the 2 expected
+  `firebase_options.dart` errors remain.
+- Lint: **0 errors** (26 warnings, all non-blocking). Build: success.
 
 **NOT done (in order):**
 1. `firebase login` + `flutterfire configure` in `mobile/` (generates `firebase_options.dart`,
    registers the Android app in the Firebase console). **Blocked: needs the user's Firebase login.**
-2. Run web test guide Parts A/B (T1–T71) against the real Firebase project, then deploy to Hosting.
+2. Run the live test pass (T1–T95 + M1–M13) against the real Firebase project, then deploy to Hosting.
 3. Reveal day (Oct 10): fill feature map, create `modules/<entity>/` per topic entity.
-4. Optional cleanup: 23 lint warnings. Remaining docs: ERD, user manual, a11y statement, defense notes.
+4. Optional: remaining lint warnings; skipped features (voice commands, i18n, scan-to-pay);
+   docs (ERD, user manual, a11y statement, defense notes).
 
 ## 5. Run commands
 
@@ -153,10 +160,13 @@ load/login. Full plain-language explanations: `docs/AWA-security-explained.md`.
 
 ## 10. Testing
 
-- Web tests: `docs/AWA-test-guide.md` (T1–T71 web, M1–M13 mobile). **None have been run yet** — that's the
-  biggest open item before reveal day. Part E has the bug-report template.
-- Lint: `npm run lint` → 0 errors, 23 warnings (react-hooks `set-state-in-effect` in ~10 components,
-  `purity` in IdleGuard, unescaped `'` entities, 2 exhaustive-deps). All non-blocking; fix only if asked.
+- Web tests: `docs/AWA-test-guide.md` (T1–T95 web, M1–M13 mobile). **None have been run yet** — that's the
+  biggest open item before reveal day. T86–T95 cover the Oct 7 features. Part E has the bug-report template.
+- Lint: `npm run lint` → 0 errors, 26 warnings (react-hooks `set-state-in-effect` in ~12 components,
+  `purity` in IdleGuard, a few exhaustive-deps). All non-blocking; fix only if asked.
+- Failed password logins are NOT audit-logged (the rules require a signed-in uid to write to `logs`;
+  anonymous writes would be spam-able). Failed 2FA attempts ARE logged (`2fa_failed`) — the user is
+  signed in at that point.
 - No unit test runner on the web side (test guide is manual). Mobile has a placeholder smoke test.
 
 ## 11. Gotchas (learned the hard way)
@@ -178,10 +188,11 @@ load/login. Full plain-language explanations: `docs/AWA-security-explained.md`.
 
 1. **Finish mobile setup:** `firebase login`, then in `mobile/`: `flutterfire configure` (pick the AWA
    Firebase project, Android only), then `flutter run` on a phone. Then test guide Part C (M1–M13).
-2. **Web live test + deploy:** test guide Parts A/B (T1–T71), `npm run deploy`, then T66–T71 on the live URL.
+2. **Web live test + deploy:** test guide T1–T95 (Parts A–B13), `npm run deploy`, then T66–T71 on the live URL.
 3. **Reveal day (Oct 10):** fill the feature map in `docs/AWA-blueprint-and-todo.md` §4, create one
    `modules/<entity>/` folder per topic entity, apply the CRUD kit, copy the rules block per collection.
-4. Then per request: face/liveness polish, login UX, docs (ERD, user manual, a11y statement, defense notes).
+4. Then per request: skipped features (voice commands, i18n, scan-to-pay QR), docs (ERD, user manual,
+   a11y statement, defense notes).
 5. Cut order if time slips: P4 extras → P3 → P2 polish. P1 + auth + roles + rules never get cut.
 
 ## 13. Dates

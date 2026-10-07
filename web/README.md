@@ -37,6 +37,11 @@ services, `config/appConfig.js` = roles, collection names, and navigation.
 - **Voice input** (`core/a11y/VoiceInput.jsx`): speech-to-text for forms (Chrome/Edge only, needs HTTPS).
 - **CSV/print reports**: export buttons on the tables.
 
+## v4.1 additions (Oct 7: audit fixes + features)
+- Fixed: atomic recovery-code burn (`runTransaction`), atomic wallet transfer (`writeBatch`), fail-closed on profile-load error, limiter escalates (2/4/8 min), face re-enroll replaces, 44px targets, 2fa_failed audit trail.
+- New: dashboard **charts + staff system stats** (zero-dep `core/ui/BarChart.jsx`), announcement **edit** (admin), **first-login forced change-password** (`/change-password`, `mustChangePassword` flag), **PWA-lite** (`public/manifest.json` + icon, no service worker), TTS **stop toggle + speed slider + read-page button** (topbar), **voice input** in announcements/SMS/wallet/check-in, **pagination** (CRUD kit, audit log, my activity), staff **notify-user** action + users search/CSV, **liveness-lite** (two frames, movement check).
+- Failed password logins are not audit-logged (rules require a signed-in uid) — failed 2FA attempts are.
+
 ## Status (Oct 7, 2026)
-Lint: 0 errors (23 non-blocking warnings). Build: success. Not yet live-tested against a real
-Firebase project (see docs/AWA-test-guide.md) and not yet deployed.
+Lint: 0 errors (26 non-blocking warnings). Build: success. Not yet live-tested against a real
+Firebase project (see docs/AWA-test-guide.md, T1–T95) and not yet deployed.

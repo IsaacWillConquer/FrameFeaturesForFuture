@@ -152,6 +152,18 @@ Most of these need **HTTPS or localhost** (camera/WebAuthn). Run before or after
 - [ ] **T84** **Voice input**: click a mic button in Chrome/Edge on localhost or HTTPS, speak, text lands in the field. (Firefox: button says unsupported — that's fine)
 - [ ] **T85** CSV/print: on `/admin/users`, `/admin/logs`, `/items` the **export/print** buttons download a CSV or open the print dialog
 
+### B13. Oct 7 additions (charts, first-login, PWA, TTS, pagination, liveness)
+- [ ] **T86** Dashboard: a **7-day bar chart** of your actions shows under "Overview". As staff/admin, a **System overview** row appears (total users, active, staff + admin, check-ins); as plain user it does not
+- [ ] **T87** Announcement edit: as **admin**, a pencil **Edit** button appears on announcements; editing saves and the card updates. As **staff**, no edit button (delete only)
+- [ ] **T88** First-login forced change-password: register a **new** account, verify, and expect a "Choose a new password" page before the app opens; after setting one, it never asks again. (Existing accounts registered before Oct 7 don't have the flag — they skip it.)
+- [ ] **T89** PWA: open `/manifest.json` (should show JSON). Chrome shows an **install** icon in the address bar; the tab has a favicon and the app has a theme color
+- [ ] **T90** TTS: **Read aloud** buttons toggle to **Stop** while speaking. Accessibility has a **Read aloud speed** slider that audibly changes the speed. The topbar has a **read-page** (speaker) button that reads the main content of the page and can be stopped
+- [ ] **T91** Voice input in more forms (Chrome/Edge): announcements message, SMS message, wallet amount + note, and check-in purpose each have a mic button
+- [ ] **T92** Pagination: `/items` and `/admin/logs` with more rows than a page show **Previous / Next** + "Page X of Y"; typing in search resets to page 1
+- [ ] **T93** `2fa_failed` in the audit log: enter a wrong 2FA code, then check `/admin/logs` — it shows a `2fa_failed` row
+- [ ] **T94** Notify user: as staff/admin on `/admin/users`, press **Notify** on a row, fill title + message. Expect: that user gets the notification live (test from a second browser or ask them)
+- [ ] **T95** Liveness: face capture while holding a **static photo** fails with the "too still" message; a real face (nodding slightly) passes
+
 ---
 
 ## Part C. Mobile setup and tests (when ready — `mobile/` is scaffolded, see C1)
