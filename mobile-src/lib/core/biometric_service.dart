@@ -1,5 +1,7 @@
 import 'package:local_auth/local_auth.dart';
 
+import '../config/app_config.dart';
+
 class BiometricService {
   static final _auth = LocalAuthentication();
 
@@ -17,7 +19,7 @@ class BiometricService {
   static Future<bool> unlock() async {
     try {
       return await _auth.authenticate(
-        localizedReason: 'Unlock AWA',
+        localizedReason: 'Unlock ${AppConfig.appName}',
         options: const AuthenticationOptions(biometricOnly: false, stickyAuth: true),
       );
     } catch (_) {

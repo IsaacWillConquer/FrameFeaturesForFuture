@@ -86,7 +86,15 @@ class _Notifications extends StatelessWidget {
               title: Text('${n['title'] ?? ''}${unread ? ' (unread)' : ''}',
                   style: TextStyle(fontWeight: unread ? FontWeight.bold : FontWeight.normal)),
               subtitle: Text('${n['message'] ?? ''}'),
-              onTap: unread ? () => d.reference.update({'read': true}) : null,
+              onTap: unread
+                  ? () async {
+                      try {
+                        await d.reference.update({'read': true});
+                      } catch (_) {
+                        // Offline or rules: stays unread, no crash.
+                      }
+                    }
+                  : null,
             );
           }).toList(),
         );

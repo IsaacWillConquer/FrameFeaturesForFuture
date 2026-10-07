@@ -13,6 +13,7 @@ class VerifyEmailScreen extends StatefulWidget {
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   String _message = '';
+  bool _busy = false;
 
   Future<void> _resend() async {
     try {
@@ -24,9 +25,17 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   Future<void> _check() async {
-    await widget.user.reload(); // userChanges emits, AuthGate moves on if verified
-    final verified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
-    if (!verified && mounted) setState(() => _message = 'Not verified yet.');
+    setState(() => _busy = true);
+    try {
+      await widget.user.reload(); // userChanges emits, AuthGate moves on if verified
+      final verified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+      if (!verified && mounted) setState(() => _message = 'Not verified yet.');
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message = 'Could not check right now. Check your internet connection.');
+      }
+    }
+    if (mounted) setState(() => _busy = false);
   }
 
   @override
@@ -39,7 +48,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           children: [
             Text('We sent a link to ${widget.user.email}. Open it, then come back and press the button below.'),
             const SizedBox(height: 16),
-            FilledButton(onPressed: _check, child: const Text("I've verified")),
+            FilledButton(
+              onPressed: _busy ? null : _check,
+              child: Text(_busy ? 'Checking...' : "I've verified"),
+            ),
             const SizedBox(height: 8),
             OutlinedButton(onPressed: _resend, child: const Text('Resend email')),
             TextButton(onPressed: AuthService.signOut, child: const Text('Log out')),

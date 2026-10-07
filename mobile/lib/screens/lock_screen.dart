@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_config.dart';
 import '../core/auth_service.dart';
 import '../core/biometric_service.dart';
 
@@ -41,7 +42,7 @@ class _LockScreenState extends State<LockScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AWA is locked')),
+      appBar: AppBar(title: Text('${AppConfig.appName} is locked')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),

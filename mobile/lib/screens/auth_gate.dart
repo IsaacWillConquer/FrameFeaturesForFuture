@@ -88,7 +88,7 @@ class _AuthGateState extends State<AuthGate> {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      const Text('Check your internet connection and try again.'),
+                      const Text('Check your internet connection and try again. If it keeps failing, ask an admin to check the database rules.'),
                       const SizedBox(height: 16),
                       FilledButton(
                         onPressed: () => setState(() => _statusFuture = null),

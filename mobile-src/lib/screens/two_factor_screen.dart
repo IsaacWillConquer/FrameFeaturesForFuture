@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_config.dart';
 import '../core/auth_service.dart';
 import '../core/totp_service.dart';
 
@@ -70,7 +71,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
           children: [
             Text(_recovery
                 ? 'Enter one of your recovery codes. Each one works only once.'
-                : 'Open your authenticator app and enter the 6-digit code for AWA.'),
+                : 'Open your authenticator app and enter the 6-digit code for ${AppConfig.appName}.'),
             const SizedBox(height: 16),
             TextField(
               controller: _code,
