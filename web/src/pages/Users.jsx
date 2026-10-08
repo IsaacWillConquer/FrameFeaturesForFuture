@@ -173,7 +173,7 @@ export default function Users() {
           </Table>
         </TableWrap>
       )}
-      {isAdmin && <p className="mt-4 text-sm text-fg-muted">You can't change your own role or status here (so you can't lock yourself out).</p>}
+      {isAdmin && <p className="mt-4 text-sm text-fg-muted">You can&apos;t change your own role or status here (so you can&apos;t lock yourself out).</p>}
 
       <Modal open={!!notifyTarget} onClose={() => setNotifyTarget(null)}
         title={notifyTarget ? `Notify ${notifyTarget.name || notifyTarget.email}` : "Notify"}>

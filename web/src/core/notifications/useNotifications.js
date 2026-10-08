@@ -9,10 +9,7 @@ export function useNotifications(uid) {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    if (!uid) {
-      setItems([]);
-      return;
-    }
+    if (!uid) return;
     const q = query(collection(db, COLLECTIONS.notifications), where("userId", "==", uid));
     return onSnapshot(
       q,
@@ -26,5 +23,6 @@ export function useNotifications(uid) {
     );
   }, [uid]);
 
-  return items;
+  // No uid (logged out) → always empty, without an extra render to clear
+  return uid ? items : [];
 }

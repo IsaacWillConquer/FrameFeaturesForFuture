@@ -78,7 +78,7 @@ export default function AiHelper() {
 
       {!aiAvailable() && (
         <Alert type="warning">
-          The AI helper isn't connected yet. Replies fall back to a demo message until Firebase AI Logic (Gemini) is set up.
+          The AI helper isn&apos;t connected yet. Replies fall back to a demo message until Firebase AI Logic (Gemini) is set up.
         </Alert>
       )}
       <Alert>{error}</Alert>

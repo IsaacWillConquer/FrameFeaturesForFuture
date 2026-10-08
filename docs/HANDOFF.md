@@ -1,6 +1,6 @@
 # AWA — Handoff doc (for a new model / new session)
 
-Read this top to bottom, then continue work. Last updated: **Oct 7, 2026** (health break).
+Read this top to bottom, then continue work. Last updated: **Oct 8, 2026** (lint fixes + docs done, uncommitted).
 
 ---
 
@@ -70,14 +70,17 @@ FinalProject_AWA/
   unhandled-async guards, `AppConfig.appName` used everywhere. `flutter analyze`: only the 2 expected
   `firebase_options.dart` errors remain.
 - Lint: **0 errors** (26 warnings, all non-blocking). Build: success.
+- **Oct 8:** all 26 lint warnings fixed (0 errors / 0 warnings, build clean) + the 4 remaining
+  docs written (ERD, user manual, a11y statement, defense notes). Both are in the working copy,
+  **uncommitted**.
 
 **NOT done (in order):**
-1. `firebase login` + `flutterfire configure` in `mobile/` (generates `firebase_options.dart`,
+1. Commit the Oct 8 working copy (16 lint-fix files + 4 new docs).
+2. `firebase login` + `flutterfire configure` in `mobile/` (generates `firebase_options.dart`,
    registers the Android app in the Firebase console). **Blocked: needs the user's Firebase login.**
-2. Run the live test pass (T1–T95 + M1–M13) against the real Firebase project, then deploy to Hosting.
-3. Reveal day (Oct 10): fill feature map, create `modules/<entity>/` per topic entity.
-4. Optional: remaining lint warnings; skipped features (voice commands, i18n, scan-to-pay);
-   docs (ERD, user manual, a11y statement, defense notes).
+3. Run the live test pass (T1–T95 + M1–M13) against the real Firebase project, then deploy to Hosting.
+4. Reveal day (Oct 10): fill feature map, create `modules/<entity>/` per topic entity.
+5. Optional: skipped features (voice commands, i18n, scan-to-pay).
 
 ## 5. Run commands
 
@@ -162,8 +165,9 @@ load/login. Full plain-language explanations: `docs/AWA-security-explained.md`.
 
 - Web tests: `docs/AWA-test-guide.md` (T1–T95 web, M1–M13 mobile). **None have been run yet** — that's the
   biggest open item before reveal day. T86–T95 cover the Oct 7 features. Part E has the bug-report template.
-- Lint: `npm run lint` → 0 errors, 26 warnings (react-hooks `set-state-in-effect` in ~12 components,
-  `purity` in IdleGuard, a few exhaustive-deps). All non-blocking; fix only if asked.
+- Lint: `npm run lint` → **0 errors, 0 warnings** (Oct 8: all 26 fixed — render-phase adjustments
+  instead of set-state-in-effect, `'` entities, `alive` flags on async effects, extracted
+  fetch helpers for purity).
 - Failed password logins are NOT audit-logged (the rules require a signed-in uid to write to `logs`;
   anonymous writes would be spam-able). Failed 2FA attempts ARE logged (`2fa_failed`) — the user is
   signed in at that point.
@@ -186,13 +190,14 @@ load/login. Full plain-language explanations: `docs/AWA-security-explained.md`.
 
 ## 12. Next steps (prioritized)
 
-1. **Finish mobile setup:** `firebase login`, then in `mobile/`: `flutterfire configure` (pick the AWA
+1. **Commit the Oct 8 working copy:** 16 files of lint fixes (now 0 warnings) + 4 new docs
+   (`AWA-ERD.md`, `AWA-user-manual.md`, `AWA-accessibility-statement.md`, `AWA-defense-notes.md`).
+2. **Finish mobile setup:** `firebase login`, then in `mobile/`: `flutterfire configure` (pick the AWA
    Firebase project, Android only), then `flutter run` on a phone. Then test guide Part C (M1–M13).
-2. **Web live test + deploy:** test guide T1–T95 (Parts A–B13), `npm run deploy`, then T66–T71 on the live URL.
-3. **Reveal day (Oct 10):** fill the feature map in `docs/AWA-blueprint-and-todo.md` §4, create one
+3. **Web live test + deploy:** test guide T1–T95 (Parts A–B13), `npm run deploy`, then T66–T71 on the live URL.
+4. **Reveal day (Oct 10):** fill the feature map in `docs/AWA-blueprint-and-todo.md` §4, create one
    `modules/<entity>/` folder per topic entity, apply the CRUD kit, copy the rules block per collection.
-4. Then per request: skipped features (voice commands, i18n, scan-to-pay QR), docs (ERD, user manual,
-   a11y statement, defense notes).
+5. Then per request: skipped features (voice commands, i18n, scan-to-pay QR).
 5. Cut order if time slips: P4 extras → P3 → P2 polish. P1 + auth + roles + rules never get cut.
 
 ## 13. Dates

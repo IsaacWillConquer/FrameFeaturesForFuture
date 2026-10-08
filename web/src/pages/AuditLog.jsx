@@ -14,6 +14,11 @@ import Input from "../core/ui/Input";
 import VoiceInput from "../core/a11y/VoiceInput";
 
 // Last 100 log entries, with a search box. Staff and admin only.
+async function fetchLogs() {
+  const snap = await getDocs(query(collection(db, COLLECTIONS.logs), orderBy("createdAt", "desc"), limit(100)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
 export default function AuditLog() {
   const { items: users } = useCollection(COLLECTIONS.users);
   const [logs, setLogs] = useState([]);
@@ -27,15 +32,21 @@ export default function AuditLog() {
     setLoading(true);
     setError("");
     try {
-      const snap = await getDocs(query(collection(db, COLLECTIONS.logs), orderBy("createdAt", "desc"), limit(100)));
-      setLogs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setLogs(await fetchLogs());
     } catch (err) {
       setError(err.message);
     }
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let alive = true;
+    fetchLogs()
+      .then((rows) => { if (alive) setLogs(rows); })
+      .catch((err) => { if (alive) setError(err.message); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, []);
 
   const names = Object.fromEntries(users.map((u) => [u.id, u.name || u.email]));
   const shown = logs.filter((l) =>

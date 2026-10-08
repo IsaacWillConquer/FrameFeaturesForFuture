@@ -14,8 +14,14 @@ import Badge from "../core/ui/Badge";
 import EmptyState from "../core/ui/EmptyState";
 import Spinner from "../core/ui/Spinner";
 import Avatar from "../core/ui/Avatar";
-import FormField from "../core/ui/FormField";
 import VoiceInput from "../core/a11y/VoiceInput";
+
+async function fetchVisits(uid) {
+  const snap = await getDocs(query(collection(db, COLLECTIONS.checkins), where("uid", "==", uid)));
+  const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  list.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0));
+  return list.slice(0, 20);
+}
 
 export default function CheckIn() {
   const { user, profile, role } = useAuth();
@@ -28,17 +34,21 @@ export default function CheckIn() {
   async function load() {
     setLoading(true);
     try {
-      const snap = await getDocs(query(collection(db, COLLECTIONS.checkins), where("uid", "==", user.uid)));
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      list.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0));
-      setVisits(list.slice(0, 20));
+      setVisits(await fetchVisits(user.uid));
     } catch (err) {
       setError(err.message);
     }
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, [user.uid]);
+  useEffect(() => {
+    let alive = true;
+    fetchVisits(user.uid)
+      .then((rows) => { if (alive) setVisits(rows); })
+      .catch((err) => { if (alive) setError(err.message); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [user.uid]);
 
   async function handleCheckIn(e) {
     e.preventDefault();

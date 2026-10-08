@@ -26,7 +26,7 @@ export default function ProtectedRoute({ children, minRole = "user" }) {
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-6 text-center">
         <h2 className="text-lg font-semibold text-fg">Could not load your account</h2>
         <p className="max-w-md text-fg-muted">
-          Your profile couldn't be loaded from the database, so the app stays locked.
+          Your profile couldn&apos;t be loaded from the database, so the app stays locked.
           Check your connection, then try again.
         </p>
         <div className="flex gap-3">

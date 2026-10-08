@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import IdleGuard from "../security/IdleGuard";
@@ -10,10 +10,13 @@ export default function Layout() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Close the mobile drawer whenever the route changes.
-  useEffect(() => {
+  // Close the mobile drawer whenever the route changes
+  // (render-phase adjustment: react.dev/learn/you-might-not-need-an-effect)
+  const [lastPath, setLastPath] = useState(location.pathname);
+  if (location.pathname !== lastPath) {
+    setLastPath(location.pathname);
     setMenuOpen(false);
-  }, [location.pathname]);
+  }
 
   return (
     <div className="flex min-h-screen bg-canvas text-fg">

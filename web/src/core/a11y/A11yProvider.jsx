@@ -31,9 +31,12 @@ export function A11yProvider({ children }) {
   }, [prefs]);
 
   // Settings saved on the account follow the person to other devices
-  useEffect(() => {
+  // (render-phase adjustment: react.dev/learn/you-might-not-need-an-effect)
+  const [lastProfile, setLastProfile] = useState(profile);
+  if (profile !== lastProfile) {
+    setLastProfile(profile);
     if (profile?.prefs) setPrefs((p) => ({ ...p, ...profile.prefs }));
-  }, [profile]);
+  }
 
   function update(change) {
     const next = { ...prefs, ...change };

@@ -111,7 +111,7 @@ export default function VerificationFallback({ uid, onVerified }) {
           onClick={() => setMessage("Asked staff for help. They can verify you in person.")}
           className="inline-flex items-center gap-2 text-sm text-fg-muted underline min-h-11"
         >
-          <LifeBuoy className="h-4 w-4" /> Can't use any method? Ask staff for help
+          <LifeBuoy className="h-4 w-4" /> Can&apos;t use any method? Ask staff for help
         </button>
       </div>
     </div>

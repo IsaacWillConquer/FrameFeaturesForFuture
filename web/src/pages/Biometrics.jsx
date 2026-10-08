@@ -17,9 +17,13 @@ import EmptyState from "../core/ui/EmptyState";
 import Spinner from "../core/ui/Spinner";
 import FaceCapture from "../core/security/FaceCapture";
 
+async function fetchBioData(uid) {
+  return Promise.all([getBiometricDevices(uid), getFaceDescriptors(uid)]);
+}
+
 export default function Biometrics() {
   const { user, profile } = useAuth();
-  const [supported, setSupported] = useState(false);
+  const supported = biometricsSupported(); // capability check, like faceRecognitionSupported() below
   const [platformOk, setPlatformOk] = useState(false);
   const [devices, setDevices] = useState([]);
   const [faces, setFaces] = useState([]);
@@ -33,7 +37,7 @@ export default function Biometrics() {
   async function load() {
     setLoading(true);
     try {
-      const [d, f] = await Promise.all([getBiometricDevices(user.uid), getFaceDescriptors(user.uid)]);
+      const [d, f] = await fetchBioData(user.uid);
       setDevices(d);
       setFaces(f);
     } catch (err) {
@@ -43,10 +47,13 @@ export default function Biometrics() {
   }
 
   useEffect(() => {
-    setSupported(biometricsSupported());
-    setPlatformOk(false);
-    platformAuthenticatorAvailable().then(setPlatformOk);
-    load();
+    let alive = true;
+    platformAuthenticatorAvailable().then((ok) => { if (alive) setPlatformOk(ok); });
+    fetchBioData(user.uid)
+      .then(([d, f]) => { if (alive) { setDevices(d); setFaces(f); } })
+      .catch((err) => { if (alive) setError(err.message); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
   }, [user.uid]);
 
   async function addDevice() {
@@ -130,7 +137,7 @@ export default function Biometrics() {
           />
           <CardBody>
             {!supported ? (
-              <Alert type="warning">This browser doesn't support biometric unlock. Try Chrome or Edge.</Alert>
+              <Alert type="warning">This browser doesn&apos;t support biometric unlock. Try Chrome or Edge.</Alert>
             ) : loading ? (
               <div className="flex justify-center p-4"><Spinner /></div>
             ) : devices.length === 0 ? (
@@ -168,7 +175,7 @@ export default function Biometrics() {
           />
           <CardBody>
             {!faceRecognitionSupported() ? (
-              <Alert type="warning">Face recognition isn't available in this browser (needs a camera + WebGL).</Alert>
+              <Alert type="warning">Face recognition isn&apos;t available in this browser (needs a camera + WebGL).</Alert>
             ) : showFace ? (
               <FaceCapture onCapture={faceMode === "test" ? testFace : enrollFace} onCancel={() => setShowFace(false)} />
             ) : loading ? (
@@ -200,7 +207,7 @@ export default function Biometrics() {
 
       <p className="mt-6 max-w-2xl text-sm text-fg-muted">
         Privacy note: face data is a 128-number mathematical descriptor, not an image. It stays tied to your account and can be
-        deleted any time. Biometric unlock proves the person at this device passed the device's own check.
+        deleted any time. Biometric unlock proves the person at this device passed the device&apos;s own check.
       </p>
     </div>
   );

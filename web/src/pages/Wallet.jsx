@@ -17,6 +17,10 @@ import Spinner from "../core/ui/Spinner";
 import FormField from "../core/ui/FormField";
 import VoiceInput from "../core/a11y/VoiceInput";
 
+async function fetchWallet(uid) {
+  return Promise.all([getWallet(uid), getTransactions(uid)]);
+}
+
 export default function Wallet() {
   const { user, role } = useAuth();
   const { items: users } = useCollection(COLLECTIONS.users);
@@ -35,7 +39,7 @@ export default function Wallet() {
   async function load() {
     setLoading(true);
     try {
-      const [w, t] = await Promise.all([getWallet(user.uid), getTransactions(user.uid)]);
+      const [w, t] = await fetchWallet(user.uid);
       setWallet(w);
       setTxns(t);
     } catch (err) {
@@ -44,7 +48,14 @@ export default function Wallet() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, [user.uid]);
+  useEffect(() => {
+    let alive = true;
+    fetchWallet(user.uid)
+      .then(([w, t]) => { if (alive) { setWallet(w); setTxns(t); } })
+      .catch((err) => { if (alive) setError(err.message); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [user.uid]);
 
   const others = users.filter((u) => u.id !== user.uid);
 

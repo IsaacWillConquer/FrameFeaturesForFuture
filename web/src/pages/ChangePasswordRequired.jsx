@@ -56,7 +56,7 @@ export default function ChangePasswordRequired() {
       title="Choose a new password"
       subtitle="For security, set your own password before using the app."
     >
-      <Alert type="info">This is a one-time step. You'll use this password from now on.</Alert>
+      <Alert type="info">This is a one-time step. You&apos;ll use this password from now on.</Alert>
       <Alert>{error}</Alert>
       <form onSubmit={handleSubmit}>
         <FormField id="current" label="Current password" type="password" value={current}

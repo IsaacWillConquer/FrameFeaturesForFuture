@@ -13,6 +13,10 @@ import Badge from "../core/ui/Badge";
 import EmptyState from "../core/ui/EmptyState";
 import Spinner from "../core/ui/Spinner";
 
+async function fetchDevices(uid) {
+  return Promise.all([getLoginHistory(uid), getTrustedDevices(uid)]);
+}
+
 export default function Devices() {
   const { user } = useAuth();
   const [history, setHistory] = useState([]);
@@ -26,7 +30,7 @@ export default function Devices() {
     setLoading(true);
     setError("");
     try {
-      const [h, t] = await Promise.all([getLoginHistory(user.uid), getTrustedDevices(user.uid)]);
+      const [h, t] = await fetchDevices(user.uid);
       setHistory(h);
       setTrusted(t);
     } catch (err) {
@@ -35,7 +39,14 @@ export default function Devices() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, [user.uid]);
+  useEffect(() => {
+    let alive = true;
+    fetchDevices(user.uid)
+      .then(([h, t]) => { if (alive) { setHistory(h); setTrusted(t); } })
+      .catch((err) => { if (alive) setError(err.message); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [user.uid]);
 
   async function trust() {
     setMessage("");

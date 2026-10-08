@@ -6,14 +6,13 @@ import { cx } from "../ui/cx";
 // Speech-to-text button. Uses the Web Speech API (Chrome/Edge, HTTPS only).
 // Hidden when the browser cannot recognize speech, so it is always an enhancement.
 export default function VoiceInput({ onResult, label = "Voice input", className }) {
-  const [supported, setSupported] = useState(false);
+  const [supported] = useState(
+    () => typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+  );
   const [listening, setListening] = useState(false);
   const recRef = useRef(null);
 
-  useEffect(() => {
-    setSupported(typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition));
-    return () => recRef.current?.abort?.();
-  }, []);
+  useEffect(() => () => recRef.current?.abort?.(), []);
 
   if (!supported) return null;
 

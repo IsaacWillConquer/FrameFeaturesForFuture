@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import Button from "../ui/Button";
 import FormField from "../ui/FormField";
@@ -9,6 +9,12 @@ export default function QRScanner({ onScan }) {
   const [cameraOn, setCameraOn] = useState(false);
   const [error, setError] = useState("");
   const [typed, setTyped] = useState("");
+  const onScanRef = useRef(onScan);
+
+  // Keep the latest callback without restarting the camera
+  useEffect(() => {
+    onScanRef.current = onScan;
+  }, [onScan]);
 
   useEffect(() => {
     if (!cameraOn) return;
@@ -24,7 +30,7 @@ export default function QRScanner({ onScan }) {
           done = true;
           scanner.stop().catch(() => {}).finally(() => {
             setCameraOn(false);
-            onScan(text);
+            onScanRef.current(text);
           });
         },
         () => {}
