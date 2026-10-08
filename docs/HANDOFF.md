@@ -90,8 +90,11 @@ FinalProject_AWA/
 - **Deferred extras:** voice commands (`core/a11y/voiceCommands.js` + topbar mic), minimal **i18n**
   (`core/i18n/`, English + Filipino, toggle in topbar + `/accessibility`), scan-to-pay QR.
 - **Mobile parity** (edit `mobile-src/lib`, then copy to `mobile/lib`): register, forgot password,
-  forced first-login change, login lockout, idle logout, contrast/reduce-motion/dyslexia prefs,
-  wallet, check-in, announcements, mark-all-read, transactional recovery-code burn, 2fa_failed log.
+  forced first-login change, login lockout (**persisted on device**), idle logout (**now applied
+  above the Navigator, so it covers every screen**), contrast/reduce-motion/dyslexia prefs, wallet
+  with **scan-to-pay + QR pay/receive** (`core/payment_qr.dart`, `qr_flutter`), check-in,
+  announcements, mark-all-read, transactional recovery-code burn, 2fa_failed log, show/hide password
+  toggles. Android: added the **`INTERNET` permission for release builds**, app label is now "AWA".
   `flutter analyze`: only the 2 expected `firebase_options.dart` errors.
 - Web lint 0/0; web build succeeds.
 - **Cleanup:** removed dead code (`core/ui/Toast.jsx` + its provider mount, `core/ui/IconButton.jsx`,

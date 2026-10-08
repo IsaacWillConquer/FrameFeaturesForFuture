@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/auth_service.dart';
+import '../core/password_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -70,23 +71,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
               decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
-            TextField(
+            PasswordField(
               controller: _password,
-              obscureText: true,
+              label: 'Password',
+              helperText: 'At least 8 characters.',
               autofillHints: const [AutofillHints.newPassword],
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                helperText: 'At least 8 characters.',
-                border: OutlineInputBorder(),
-              ),
             ),
             const SizedBox(height: 16),
-            TextField(
+            PasswordField(
               controller: _confirm,
-              obscureText: true,
+              label: 'Confirm password',
               autofillHints: const [AutofillHints.newPassword],
               onSubmitted: (_) => _submit(),
-              decoration: const InputDecoration(labelText: 'Confirm password', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
             if (_error.isNotEmpty)

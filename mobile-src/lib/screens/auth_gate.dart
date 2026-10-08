@@ -1,10 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../config/app_config.dart';
 import '../core/app_prefs.dart';
 import '../core/auth_service.dart';
-import '../core/idle_watcher.dart';
 import '../core/totp_service.dart';
 import 'change_password_screen.dart';
 import 'deactivated_screen.dart';
@@ -128,11 +126,7 @@ class _AuthGateState extends State<AuthGate> {
               return LockScreen(onUnlocked: () => setState(() => _unlockedFor = user.uid));
             }
 
-            return IdleWatcher(
-              timeout: const Duration(minutes: AppConfig.idleLogoutMinutes),
-              onIdle: AuthService.signOut,
-              child: HomeScreen(user: user, profile: s.profile),
-            );
+            return HomeScreen(user: user, profile: s.profile);
           },
         );
       },

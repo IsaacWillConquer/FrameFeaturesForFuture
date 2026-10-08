@@ -16,10 +16,11 @@ or live-tested yet. Full context: `docs/HANDOFF.md`.
 - PWA install: manifest + real PNG icons (192/512) + minimal service worker.
 - Deferred extras built: **scan-to-pay QR** (wallet), **voice commands**, **i18n** (shell/nav/auth,
   English + Filipino, language toggle).
-- Mobile parity (source in `mobile-src/lib`, synced to `mobile/lib`): register, forgot password,
-  forced first-login change, login lockout, idle logout, high-contrast/reduce-motion/dyslexia prefs,
-  QR scan, wallet, check-in, announcements, mark-all-read notifications. `flutter analyze` = only
-  the 2 expected `firebase_options.dart` errors.
+- Mobile (source in `mobile-src/lib`, synced to `mobile/lib`): register, forgot password, forced
+  first-login change, **persisted** login lockout, idle logout (**all screens**), full a11y prefs,
+  wallet + **scan-to-pay** + **QR pay/receive** (`qr_flutter`), check-in, announcements,
+  mark-all-read, show/hide password toggles. Android **`INTERNET` permission** added for release.
+  `flutter analyze` = only the 2 expected `firebase_options.dart` errors.
 - Lint: web 0 errors / 0 warnings; web build success. Docs: ERD, user manual, a11y statement,
   defense notes.
 
@@ -37,7 +38,11 @@ or live-tested yet. Full context: `docs/HANDOFF.md`.
 
 ## 4. Mobile (blocked on `firebase login`)
 - [ ] In `mobile/`: `flutterfire configure` (AWA project, Android) → creates `firebase_options.dart`.
+      This is the only thing keeping `flutter analyze` from being fully clean.
 - [ ] `flutter run`; then tests M1–M13.
+- Mobile already has: register, forgot password, forced first-login change, persisted login lockout,
+  idle logout (all screens), full a11y prefs, wallet + scan-to-pay + QR pay/receive, check-in,
+  announcements, mark-all-read. Android `INTERNET` permission added (needed for release).
 
 ## 5. Reveal day (Oct 10) — topic modules
 - [ ] Fill the feature map in `docs/AWA-blueprint-and-todo.md` §4.

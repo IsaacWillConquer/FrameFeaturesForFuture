@@ -4,12 +4,10 @@ class AppConfig {
 
   static const users = 'users';
   static const publicProfiles = 'public_profiles';
-  static const supportRequests = 'support_requests';
   static const logs = 'logs';
   static const notifications = 'notifications';
   static const totp = 'totp';
   static const announcements = 'announcements';
-  static const smsOutbox = 'sms_outbox';
   static const wallets = 'wallets';
   static const transactions = 'transactions';
   static const checkins = 'checkins';

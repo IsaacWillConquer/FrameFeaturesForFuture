@@ -1,14 +1,29 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../config/app_config.dart';
 import '../core/auth_service.dart';
+import '../core/payment_qr.dart';
+import 'scan_screen.dart';
 
-// Simulated wallet: balance, top-up, transfer, ledger. Same data model as web.
+// Simulated wallet: balance, top-up, transfer, ledger, QR pay/receive.
+// Same data model as the web wallet.
 class WalletScreen extends StatefulWidget {
   final String uid;
   final String name;
-  const WalletScreen({super.key, required this.uid, required this.name});
+  final String? initialToUid;
+  final String? initialAmount;
+  final String? initialNote;
+
+  const WalletScreen({
+    super.key,
+    required this.uid,
+    required this.name,
+    this.initialToUid,
+    this.initialAmount,
+    this.initialNote,
+  });
 
   @override
   State<WalletScreen> createState() => _WalletScreenState();
@@ -23,6 +38,7 @@ class _WalletScreenState extends State<WalletScreen> {
   String _message = '';
   String _error = '';
   bool _busy = false;
+  bool _showQr = false;
 
   Future<void> _ensureWallet() async {
     final ref = _db.collection(AppConfig.wallets).doc(widget.uid);
@@ -75,7 +91,8 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Future<void> _send() async {
     final value = double.tryParse(_amount.text) ?? 0;
-    if (_toUid == null || value <= 0) {
+    final toUid = _toUid;
+    if (toUid == null || value <= 0) {
       setState(() => _error = 'Choose a recipient and enter an amount.');
       return;
     }
@@ -99,22 +116,22 @@ class _WalletScreenState extends State<WalletScreen> {
         SetOptions(merge: true),
       );
       batch.set(
-        _db.collection(AppConfig.wallets).doc(_toUid),
-        {'balance': FieldValue.increment(value), 'uid': _toUid},
+        _db.collection(AppConfig.wallets).doc(toUid),
+        {'balance': FieldValue.increment(value), 'uid': toUid},
         SetOptions(merge: true),
       );
       await batch.commit();
       await _db.collection(AppConfig.transactions).add({
         'uid': widget.uid,
         'type': 'payment_sent',
-        'toUid': _toUid,
+        'toUid': toUid,
         'amount': value,
         'note': '',
         'status': 'simulated',
         'createdAt': FieldValue.serverTimestamp(),
       });
       await _db.collection(AppConfig.transactions).add({
-        'uid': _toUid,
+        'uid': toUid,
         'type': 'payment_received',
         'fromUid': widget.uid,
         'amount': value,
@@ -122,11 +139,12 @@ class _WalletScreenState extends State<WalletScreen> {
         'status': 'simulated',
         'createdAt': FieldValue.serverTimestamp(),
       });
-      await AuthService.logAction(widget.uid, 'payment_sent', '$value to $_toUid');
+      await AuthService.logAction(widget.uid, 'payment_sent', '$value to $toUid');
       if (mounted) {
         setState(() {
           _message = 'Sent $value (simulated).';
           _amount.clear();
+          _showQr = false;
         });
       }
     } catch (e) {
@@ -135,9 +153,36 @@ class _WalletScreenState extends State<WalletScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
+  // Opens the scanner; a payment/profile code prefills the send form.
+  Future<void> _scanToPay() async {
+    final raw = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const ScanScreen(payMode: true)),
+    );
+    if (raw == null || !mounted) return;
+    final qr = parsePaymentQR(raw);
+    if (qr == null) {
+      setState(() => _error = 'That QR is not an AWA payment or profile code.');
+      return;
+    }
+    setState(() {
+      _error = '';
+      if (qr.type == 'pay') {
+        _toUid = qr.toUid;
+        _amount.text = qr.amount.toStringAsFixed(qr.amount.truncateToDouble() == qr.amount ? 0 : 2);
+        _message = 'Scanned a request for ${qr.amount}. Check the details, then press Send.';
+      } else {
+        _toUid = qr.uid;
+        _message = 'Scanned the recipient${qr.name.isNotEmpty ? ' ${qr.name}' : ''}. Enter an amount and press Send.';
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    _toUid = widget.initialToUid;
+    if (widget.initialAmount != null) _amount.text = widget.initialAmount!;
     _ensureWallet().catchError((_) {});
   }
 
@@ -157,6 +202,8 @@ class _WalletScreenState extends State<WalletScreen> {
     final peopleStream = _db
         .collection(AppConfig.publicProfiles)
         .snapshots();
+    final value = double.tryParse(_amount.text) ?? 0;
+    final canShowQr = _toUid != null && value > 0;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Wallet')),
@@ -192,22 +239,29 @@ class _WalletScreenState extends State<WalletScreen> {
                 final docs = (snap.data?.docs ?? [])
                     .where((d) => d.id != widget.uid)
                     .toList();
+                // If a recipient was prefilled (e.g. from a scanned code) before
+                // the profile list loaded, include a placeholder so the dropdown's
+                // value always matches an item.
+                final hasSelected = _toUid != null && docs.any((d) => d.id == _toUid);
+                final items = <DropdownMenuItem<String>>[
+                  ...docs.map((d) => DropdownMenuItem(
+                        value: d.id,
+                        child: Text(
+                          (d.data()['name'] as String?)?.isNotEmpty == true
+                              ? d.data()['name'] as String
+                              : (d.data()['email'] as String? ?? d.id),
+                        ),
+                      )),
+                  if (_toUid != null && !hasSelected)
+                    DropdownMenuItem(value: _toUid, child: Text(_toUid!)),
+                ];
                 return DropdownButtonFormField<String>(
                   initialValue: _toUid,
                   decoration: const InputDecoration(
                     labelText: 'Recipient',
                     border: OutlineInputBorder(),
                   ),
-                  items: docs
-                      .map((d) => DropdownMenuItem(
-                            value: d.id,
-                            child: Text(
-                              (d.data()['name'] as String?)?.isNotEmpty == true
-                                  ? d.data()['name'] as String
-                                  : (d.data()['email'] as String? ?? d.id),
-                            ),
-                          ))
-                      .toList(),
+                  items: items,
                   onChanged: (v) => setState(() => _toUid = v),
                 );
               },
@@ -216,13 +270,42 @@ class _WalletScreenState extends State<WalletScreen> {
             TextField(
               controller: _amount,
               keyboardType: TextInputType.number,
+              onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(labelText: 'Amount', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 8),
-            FilledButton(
-              onPressed: _busy ? null : _send,
-              child: const Text('Send'),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _busy ? null : _send,
+                    child: const Text('Send'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _scanToPay,
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: const Text('Scan'),
+                ),
+              ],
             ),
+            if (canShowQr) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => setState(() => _showQr = !_showQr),
+                icon: const Icon(Icons.qr_code),
+                label: Text(_showQr ? 'Hide payment QR' : 'Show payment QR'),
+              ),
+              if (_showQr)
+                Center(
+                  child: QrImageView(
+                    data: encodePaymentQR(toUid: _toUid!, amount: value),
+                    size: 200,
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+            ],
             const Divider(height: 32),
             Text('Add demo credits', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
@@ -235,6 +318,18 @@ class _WalletScreenState extends State<WalletScreen> {
             OutlinedButton(
               onPressed: _busy ? null : _topUp,
               child: const Text('Top up'),
+            ),
+            const Divider(height: 32),
+            Text('My receive code', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            const Text('Show this to someone so they can pay you (simulated).'),
+            const SizedBox(height: 8),
+            Center(
+              child: QrImageView(
+                data: encodeProfileQR(uid: widget.uid, name: widget.name),
+                size: 200,
+                backgroundColor: Colors.white,
+              ),
             ),
             const Divider(height: 32),
             Text('Recent transactions', style: Theme.of(context).textTheme.titleMedium),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../core/auth_service.dart';
+import '../core/payment_qr.dart';
 import 'announcements_screen.dart';
 import 'change_password_screen.dart';
 import 'checkin_screen.dart';
@@ -20,6 +21,37 @@ class HomeScreen extends StatelessWidget {
       (profile?['name'] as String?)?.isNotEmpty == true
           ? profile!['name'] as String
           : (user.email ?? '');
+
+  String _amountText(double v) =>
+      v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 2);
+
+  // Scans a code; an AWA payment/profile code opens the wallet prefilled.
+  Future<void> _openScanner(BuildContext context) async {
+    final raw = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const ScanScreen(payMode: true)),
+    );
+    if (raw == null || !context.mounted) return;
+    final qr = parsePaymentQR(raw);
+    if (qr == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Scanned: $raw')),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WalletScreen(
+          uid: user.uid,
+          name: _name,
+          initialToUid: qr.type == 'pay' ? qr.toUid : qr.uid,
+          initialAmount: qr.type == 'pay' ? _amountText(qr.amount) : null,
+        ),
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +80,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _Action('Scan QR code', Icons.qr_code_scanner,
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanScreen()))),
+                () => _openScanner(context)),
             _Action('Wallet', Icons.account_balance_wallet,
                 () => Navigator.push(context, MaterialPageRoute(builder: (_) => WalletScreen(uid: user.uid, name: _name)))),
             _Action('Check-in', Icons.how_to_reg,

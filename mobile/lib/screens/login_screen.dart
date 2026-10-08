@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../core/auth_service.dart';
+import '../core/login_limiter.dart';
+import '../core/password_field.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,32 +19,14 @@ class _LoginScreenState extends State<LoginScreen> {
   String _error = '';
   bool _busy = false;
 
-  // Simple login lockout, mirrors the web limiter (5 tries, then 2/4/8 min).
-  int _fails = 0;
-  DateTime? _lockedUntil;
-
-  int get _secondsLocked {
-    final until = _lockedUntil;
-    if (until == null) return 0;
-    final left = until.difference(DateTime.now()).inSeconds;
-    return left > 0 ? left : 0;
-  }
-
-  void _onWrongPassword() {
-    _fails += 1;
-    if (_fails >= 5) {
-      final step = (_fails - 5).clamp(0, 2);
-      final minutes = 2 * (1 << step); // 2, 4, 8
-      _lockedUntil = DateTime.now().add(Duration(minutes: minutes));
-    }
-  }
-
   Future<void> _submit() async {
-    if (_email.text.trim().isEmpty || _password.text.isEmpty) {
+    final email = _email.text;
+    if (email.trim().isEmpty || _password.text.isEmpty) {
       setState(() => _error = 'Enter your email and password.');
       return;
     }
-    final locked = _secondsLocked;
+    final locked = await LoginLimiter.secondsLocked(email);
+    if (!mounted) return;
     if (locked > 0) {
       setState(() => _error = 'Too many wrong tries. Try again in $locked seconds.');
       return;
@@ -52,15 +36,14 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = '';
     });
     try {
-      await AuthService.signIn(_email.text, _password.text);
-      _fails = 0;
-      _lockedUntil = null;
+      await AuthService.signIn(email, _password.text);
+      await LoginLimiter.clearFails(email);
       // AuthGate reacts to the login by itself
     } catch (e) {
+      var wait = 0;
       if (e is FirebaseAuthException && e.code == 'invalid-credential') {
-        _onWrongPassword();
+        wait = await LoginLimiter.recordFail(email);
       }
-      final wait = _secondsLocked;
       if (mounted) {
         setState(() {
           _error = wait > 0
@@ -112,12 +95,11 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
-            TextField(
+            PasswordField(
               controller: _password,
-              obscureText: true,
+              label: 'Password',
               autofillHints: const [AutofillHints.password],
               onSubmitted: (_) => _submit(),
-              decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
             if (_error.isNotEmpty)

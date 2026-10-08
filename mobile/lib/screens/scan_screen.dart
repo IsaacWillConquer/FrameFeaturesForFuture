@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-// Camera scan with a type-the-code fallback (camera must never be the only way)
+// Camera scan with a type-the-code fallback (camera must never be the only way).
+// When payMode is true the screen returns the scanned value to the caller
+// (used by the wallet's scan-to-pay); otherwise it just displays it.
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key});
+  final bool payMode;
+  const ScanScreen({super.key, this.payMode = false});
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -18,6 +21,10 @@ class _ScanScreenState extends State<ScanScreen> {
     // The camera fires many times per second, so only the camera path is guarded.
     // Typed codes always go through (you can enter a second code).
     if (fromCamera && _result != null) return;
+    if (widget.payMode) {
+      if (mounted) Navigator.pop(context, value);
+      return;
+    }
     setState(() {
       _result = value;
       _cameraOn = false; // removing the widget releases the camera
@@ -33,11 +40,16 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan QR code')),
+      appBar: AppBar(title: Text(widget.payMode ? 'Scan a payment code' : 'Scan QR code')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            if (widget.payMode)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text('Point the camera at an AWA payment or profile code.'),
+              ),
             if (_cameraOn)
               SizedBox(
                 height: 320,

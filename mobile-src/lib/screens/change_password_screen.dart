@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/auth_service.dart';
+import '../core/password_field.dart';
 
 // Used for the forced first-login change and for a voluntary change from Profile.
 class ChangePasswordScreen extends StatefulWidget {
@@ -80,30 +81,24 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 padding: EdgeInsets.only(bottom: 16),
                 child: Text('For your safety, please change the password you were given before continuing.'),
               ),
-            TextField(
+            PasswordField(
               controller: _current,
-              obscureText: true,
+              label: 'Current password',
               autofillHints: const [AutofillHints.password],
-              decoration: const InputDecoration(labelText: 'Current password', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
-            TextField(
+            PasswordField(
               controller: _next,
-              obscureText: true,
+              label: 'New password',
+              helperText: 'At least 8 characters.',
               autofillHints: const [AutofillHints.newPassword],
-              decoration: const InputDecoration(
-                labelText: 'New password',
-                helperText: 'At least 8 characters.',
-                border: OutlineInputBorder(),
-              ),
             ),
             const SizedBox(height: 16),
-            TextField(
+            PasswordField(
               controller: _confirm,
-              obscureText: true,
+              label: 'Confirm new password',
               autofillHints: const [AutofillHints.newPassword],
               onSubmitted: (_) => _submit(),
-              decoration: const InputDecoration(labelText: 'Confirm new password', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
             if (_error.isNotEmpty)
