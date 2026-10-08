@@ -20,6 +20,8 @@ erDiagram
     USERS ||--o{ TRANSACTIONS : "from / to (wallet ledger)"
     USERS ||--o{ CHECKINS : "uid (visit record)"
     USERS ||--o{ AI_CHATS : "uid (demo chat history)"
+    USERS ||--o| PUBLIC_PROFILES : "uid (safe public mirror)"
+    USERS ||--o{ SUPPORT_REQUESTS : "uid (staff-assisted verification)"
     USERS ||--o{ ITEMS : "createdBy (demo CRUD)"
     WALLETS ||--o{ TRANSACTIONS : "walletId"
     ANNOUNCEMENTS }o..o| USERS : "posted by staff/admin (no author field kept)"
@@ -61,11 +63,13 @@ erDiagram
     }
     TRANSACTIONS {
         string id PK "auto"
-        string from "payer uid"
-        string to "payee uid"
+        string uid "owner of this ledger row"
+        string type "payment_sent | payment_received | topup"
+        string toUid "payee uid (sent rows)"
+        string fromUid "payer uid (received rows)"
         number amount "simulated"
-        string type "payment_sent | topup"
         string note
+        string status "simulated"
         timestamp createdAt
     }
     LOGIN_HISTORY {
@@ -132,6 +136,23 @@ erDiagram
         string status "simulated"
         timestamp createdAt
     }
+    PUBLIC_PROFILES {
+        string uid PK "same uid as users"
+        string name
+        string email
+    }
+    SUPPORT_REQUESTS {
+        string id PK "auto"
+        string uid "who asked for help"
+        string name
+        string email
+        string reason "verification"
+        string note
+        string status "open | resolved"
+        string resolvedBy "staff uid"
+        timestamp createdAt
+        timestamp resolvedAt
+    }
 ```
 
 ## 2. Relationship rules (enforced in `web/firestore.rules`)
@@ -142,8 +163,11 @@ erDiagram
 | owner-only rows (`totp`, `wallets`, `trusted_devices`, `webauthn_credentials`, `face_descriptors`) | `request.auth.uid == resource.data.uid` on every read/write |
 | logs | write requires a signed-in uid writing their own `uid`; read staff/admin |
 | notifications | recipient reads their own (`userId == auth.uid`); staff/admin can create for others |
-| transactions / wallets | wallet transfer is one atomic `writeBatch` (both sides checked in the rules) |
+| transactions / wallets | a normal user may only CREDIT another wallet (`walletCreditOk`), never debit it; the transfer is one atomic `writeBatch` |
+| public_profiles | safe uid/name/email mirror: any signed-in user reads; only the owner writes; wallet recipients come from here instead of `users` |
+| support_requests | a user files their own (`status == "open"`); staff/admin read all and resolve |
 | announcements | staff/admin write; anyone signed-in reads |
+| ai_chats | owner-only; read checks `resource.data.uid`, create checks `request.resource.data.uid` |
 | items (demo) | signed-in users CRUD their own rows; staff/admin read all |
 
 ## 3. Notes for the grader

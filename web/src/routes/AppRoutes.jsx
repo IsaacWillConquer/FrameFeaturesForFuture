@@ -23,6 +23,7 @@ import Accessibility from "../pages/Accessibility";
 import MyActivity from "../pages/MyActivity";
 import Users from "../pages/Users";
 import AuditLog from "../pages/AuditLog";
+import SupportRequests from "../pages/SupportRequests";
 import Items from "../modules/demo/Items";
 import { NotFound, Forbidden, Deactivated } from "../pages/StatusPages";
 
@@ -55,6 +56,7 @@ export default function AppRoutes() {
         <Route path="/activity" element={<ProtectedRoute><MyActivity /></ProtectedRoute>} />
         <Route path="/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute minRole="staff"><Users /></ProtectedRoute>} />
+        <Route path="/admin/support" element={<ProtectedRoute minRole="staff"><SupportRequests /></ProtectedRoute>} />
         <Route path="/admin/logs" element={<ProtectedRoute minRole="staff"><AuditLog /></ProtectedRoute>} />
         <Route path="/deactivated" element={<Deactivated />} />
         <Route path="/forbidden" element={<Forbidden />} />

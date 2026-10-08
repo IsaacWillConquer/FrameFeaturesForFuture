@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, Plus, Send } from "lucide-react";
+import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, Plus, Send, QrCode } from "lucide-react";
 import { useAuth } from "../core/auth/AuthProvider";
 import { useCollection } from "../core/crud/useCollection";
 import { COLLECTIONS } from "../config/appConfig";
 import { getWallet, getTransactions, payTo, topUp } from "../adapters/paymentService";
 import { logAction } from "../core/logger";
+import { encodePaymentQR, encodeProfileQR, parsePaymentQR } from "../core/qr/paymentQR";
+import QRGenerator from "../core/qr/QRGenerator";
+import QRScanner from "../core/qr/QRScanner";
 import PageHeader from "../core/ui/PageHeader";
 import Card, { CardHeader, CardBody } from "../core/ui/Card";
 import StatCard from "../core/ui/StatCard";
@@ -22,8 +24,8 @@ async function fetchWallet(uid) {
 }
 
 export default function Wallet() {
-  const { user, role } = useAuth();
-  const { items: users } = useCollection(COLLECTIONS.users);
+  const { user, role, profile } = useAuth();
+  const { items: people, error: peopleError } = useCollection(COLLECTIONS.publicProfiles);
   const [wallet, setWallet] = useState(null);
   const [txns, setTxns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,7 @@ export default function Wallet() {
   const [payAmount, setPayAmount] = useState("");
   const [payNote, setPayNote] = useState("");
   const [topAmount, setTopAmount] = useState("");
+  const [showQr, setShowQr] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -57,7 +60,9 @@ export default function Wallet() {
     return () => { alive = false; };
   }, [user.uid]);
 
-  const others = users.filter((u) => u.id !== user.uid);
+  const others = people.filter((u) => u.id !== user.uid);
+  const nameOf = (id) => others.find((u) => u.id === id)?.name || id;
+  const canPay = payToId && Number(payAmount) > 0;
 
   async function handlePay(e) {
     e.preventDefault();
@@ -66,7 +71,7 @@ export default function Wallet() {
       await payTo(user.uid, payToId, payAmount, payNote);
       await logAction(user.uid, "payment_sent", `${payAmount} to ${payToId}`);
       setMessage(`Sent ${payAmount} (simulated).`);
-      setPayAmount(""); setPayNote("");
+      setPayAmount(""); setPayNote(""); setShowQr(false);
       await load();
     } catch (err) {
       setError(err.message);
@@ -89,14 +94,35 @@ export default function Wallet() {
     setBusy(false);
   }
 
+  // A scanned QR either asks to be paid (prefill the form) or identifies the
+  // person to pay (their "receive" code).
+  function handleScan(text) {
+    const data = parsePaymentQR(text);
+    if (!data) {
+      setError("That QR is not an AWA payment or profile code.");
+      return;
+    }
+    setError("");
+    if (data.t === "pay") {
+      setPayToId(data.toUid);
+      setPayAmount(String(data.amount));
+      setPayNote(data.note || "");
+      setMessage(`Scanned a request for ${data.amount} (simulated). Check the details, then press Send.`);
+    } else {
+      setPayToId(data.uid);
+      setMessage(`Scanned the recipient${data.name ? ` ${data.name}` : ""}. Enter an amount and press Send.`);
+    }
+  }
+
   return (
     <div>
-      <PageHeader title="Wallet" description="Simulated balance and QR payments for the demo." />
+      <PageHeader title="Wallet" description="Simulated balance, QR payments and transfers for the demo." />
 
       {role === "user" && (
         <Alert type="warning">Demo money only. Nothing here is a real payment.</Alert>
       )}
       <Alert>{error}</Alert>
+      <Alert>{peopleError}</Alert>
       <Alert type="info">{message}</Alert>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -107,7 +133,7 @@ export default function Wallet() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Send payment" description="Move demo credits to another user." />
+          <CardHeader title="Send payment" description="Move demo credits to another user, or scan their code." />
           <CardBody>
             <form onSubmit={handlePay}>
               <div className="mb-4">
@@ -135,8 +161,23 @@ export default function Wallet() {
                   <VoiceInput label="Note by voice" onResult={(t) => setPayNote(t)} />
                 </div>
               </div>
-              <Button type="submit" disabled={busy}><Send className="h-4 w-4" /> Send</Button>
+              <div className="flex flex-wrap gap-3">
+                <Button type="submit" disabled={busy}><Send className="h-4 w-4" /> Send</Button>
+                <Button type="button" variant="secondary" disabled={!canPay} onClick={() => setShowQr((v) => !v)}>
+                  <QrCode className="h-4 w-4" /> {showQr ? "Hide payment QR" : "Show payment QR"}
+                </Button>
+              </div>
             </form>
+
+            {showQr && canPay && (
+              <div className="mt-4">
+                <p className="mb-2 text-sm text-fg-muted">
+                  Show this to <strong>{nameOf(payToId)}</strong> to request {payAmount} (simulated).
+                </p>
+                <QRGenerator value={encodePaymentQR({ toUid: payToId, amount: payAmount, note: payNote })} />
+              </div>
+            )}
+
             <div className="my-4 flex items-center gap-3 text-xs text-fg-muted">
               <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
             </div>
@@ -147,9 +188,6 @@ export default function Wallet() {
               </div>
               <Button type="submit" variant="secondary" disabled={busy}><Plus className="h-4 w-4" /> Top up</Button>
             </form>
-            <p className="mt-3 text-sm text-fg-muted">
-              <Link to="/qr-demo" className="text-primary underline">Make a payment QR</Link> to scan on another device.
-            </p>
           </CardBody>
         </Card>
 
@@ -184,6 +222,22 @@ export default function Wallet() {
                 })}
               </ul>
             )}
+          </CardBody>
+        </Card>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Scan to pay" description="Scan an AWA payment or profile QR code." />
+          <CardBody>
+            <QRScanner onScan={handleScan} />
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="My receive code" description="Let someone scan this to pay you." />
+          <CardBody>
+            <QRGenerator value={encodeProfileQR({ uid: user.uid, name: profile?.name || "" })} />
           </CardBody>
         </Card>
       </div>

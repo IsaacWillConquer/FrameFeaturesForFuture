@@ -15,32 +15,68 @@ Future<void> main() async {
 class AwaApp extends StatelessWidget {
   const AwaApp({super.key});
 
-  ThemeData _theme(Brightness brightness) => ThemeData(
-        colorSchemeSeed: Colors.blue,
+  // Adds letter spacing + line height for the dyslexia-friendly option.
+  TextTheme _spaced(TextTheme t) {
+    TextStyle? s(TextStyle? x) => x?.copyWith(letterSpacing: 0.6, height: 1.6);
+    return t.copyWith(
+      displayLarge: s(t.displayLarge),
+      displayMedium: s(t.displayMedium),
+      displaySmall: s(t.displaySmall),
+      headlineLarge: s(t.headlineLarge),
+      headlineMedium: s(t.headlineMedium),
+      headlineSmall: s(t.headlineSmall),
+      titleLarge: s(t.titleLarge),
+      titleMedium: s(t.titleMedium),
+      titleSmall: s(t.titleSmall),
+      bodyLarge: s(t.bodyLarge),
+      bodyMedium: s(t.bodyMedium),
+      bodySmall: s(t.bodySmall),
+      labelLarge: s(t.labelLarge),
+      labelMedium: s(t.labelMedium),
+      labelSmall: s(t.labelSmall),
+    );
+  }
+
+  ThemeData _theme(Brightness brightness, Map<String, dynamic> prefs) {
+    final contrast = prefs['contrast'] == true;
+    final base = ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.blue,
         brightness: brightness,
-        useMaterial3: true,
-        // Keeps tap targets at least 48dp (accessibility)
-        materialTapTargetSize: MaterialTapTargetSize.padded,
-      );
+        contrastLevel: contrast ? 1.0 : 0.0,
+      ),
+      brightness: brightness,
+      useMaterial3: true,
+      // Keeps tap targets at least 48dp (accessibility)
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+    );
+    if (prefs['dyslexia'] == true) {
+      return base.copyWith(textTheme: _spaced(base.textTheme));
+    }
+    return base;
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Rebuilds when the person changes text size / dark mode in Settings
+    // Rebuilds when the person changes text size / display settings in Settings
     return ValueListenableBuilder<Map<String, dynamic>>(
       valueListenable: AppPrefs.notifier,
       builder: (context, prefs, _) {
         final factor = AppPrefs.textFactor(prefs);
         return MaterialApp(
           title: AppConfig.appName,
-          theme: _theme(Brightness.light),
-          darkTheme: _theme(Brightness.dark),
+          theme: _theme(Brightness.light, prefs),
+          darkTheme: _theme(Brightness.dark, prefs),
           themeMode: prefs['dark'] == true ? ThemeMode.dark : ThemeMode.light,
           builder: (context, child) {
             // Multiply on top of the phone's own text-size setting
-            final system = MediaQuery.textScalerOf(context).scale(1.0);
+            final mq = MediaQuery.of(context);
+            final system = mq.textScaler.scale(1.0);
             return MediaQuery(
-              data: MediaQuery.of(context)
-                  .copyWith(textScaler: TextScaler.linear(system * factor)),
+              data: mq.copyWith(
+                textScaler: TextScaler.linear(system * factor),
+                disableAnimations: prefs['reduceMotion'] == true,
+              ),
               child: child!,
             );
           },

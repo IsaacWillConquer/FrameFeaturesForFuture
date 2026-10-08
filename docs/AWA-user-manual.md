@@ -64,7 +64,7 @@ If your account was created with a temporary password (e.g. by an admin), the ap
 
 - Everything works keyboard-only; there is a **skip to main content** link (Tab on page load).
 - All buttons/fields have visible labels and at least 44px touch targets.
-- Important messages are announced to screen readers (aria-live toasts).
+- Important messages are announced to screen readers (ARIA live regions).
 - Every verification method has a fallback — the app never requires a camera, microphone,
   fingerprint or phone to get in.
 - Full statement: `docs/AWA-accessibility-statement.md`.

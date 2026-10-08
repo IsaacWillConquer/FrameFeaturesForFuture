@@ -15,18 +15,21 @@ FinalProject_AWA/
 **New to the project (or a new model session)?** Start with `docs/HANDOFF.md` — it has the current
 state, run commands, conventions, gotchas, and next steps in one place.
 
-## Status (Oct 7, 2026)
+## Status (Oct 8, 2026)
 
-- **Web v3 built + audited + fixed (6 commits):** design system, app shell, all pages, CRUD kit,
+- **Web v3 built + audited + fixed (7 commits):** design system, app shell, all pages, CRUD kit,
   P1 security (email verification, 2FA, QR, face, biometrics, fallback chain, notifications),
-  security extras, and P4 extras (wallet, SMS, AI, check-in, voice). Plus Oct 7 additions: dashboard
-  charts + admin stats, announcement edit, first-login forced change-password, PWA-lite, TTS
-  stop/rate/read-page, voice input coverage, pagination, liveness-lite, staff notify-user.
-  Lint: 0 errors. Build: success.
-- **Mobile scaffolded + fixed Oct 7:** `mobile/` created from `mobile-src/lib`, deps added, all 3
-  Android edits applied, unhandled-async guards, `AppConfig.appName` everywhere. Remaining:
-  `firebase login` + `flutterfire configure` (needs your Firebase login), then `flutter run` on a phone.
-- **Not done:** live test pass (T1–T95), deploy to Hosting, topic modules (Oct 10).
+  security extras, and P4 extras (wallet, SMS, AI, check-in, voice). Plus dashboard charts + admin
+  stats, announcement edit, first-login forced change-password, **PWA (service worker + real icons)**,
+  TTS, voice input + **voice commands**, pagination, liveness-lite, staff notify-user, **i18n
+  (English/Filipino)**, and **scan-to-pay QR**.
+- **Audit fixes (Oct 8):** Firestore rules hardened — `ai_chats` read bug, new `public_profiles`
+  (wallet recipients) and `support_requests` (functional staff fallback at `/admin/support`), and
+  rules-safe wallet credits. 2FA status now fails closed. Lint: 0/0, build: success.
+- **Mobile scaffolded + parity added:** register, forgot password, forced first-login change, login
+  lockout, idle logout, contrast/reduce-motion/dyslexia prefs, QR scan, wallet, check-in,
+  announcements. `flutter analyze`: only the expected `firebase_options.dart` errors remain.
+- **Not done:** live test pass (T1–T95), publish rules + deploy to Hosting, topic modules (Oct 10).
 
 ## Start here (in this order)
 

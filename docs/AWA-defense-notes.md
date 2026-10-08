@@ -86,7 +86,7 @@ internationalization, Lighthouse/screen-reader audit results, and the topic enti
 
 ## 6. Numbers worth memorizing
 
-- 6 commits of audit fixes + features; 0 lint errors/warnings; build clean.
+- 7 commits of audit fixes + features; 0 lint errors/warnings; build clean.
 - T95 + M13 test cases in the test guide.
 - 15 Firestore collections; 6 identity/verification methods; 6 accessibility settings.
 - Lockout: 5 tries → 2/4/8 min. Idle: warn 13 min → logout 15 min.

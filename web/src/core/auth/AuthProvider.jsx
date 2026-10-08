@@ -14,6 +14,7 @@ export function AuthProvider({ children }) {
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [twoFactorPassed, setTwoFactorPassed] = useState(false);
   const [profileError, setProfileError] = useState(false);
+  const [securityError, setSecurityError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function loadProfile(u) {
@@ -30,9 +31,12 @@ export function AuthProvider({ children }) {
     try {
       const totpSnap = await getDoc(doc(db, COLLECTIONS.totp, u.uid));
       setTotpEnabled(totpSnap.exists() && totpSnap.data().enabled === true);
+      setSecurityError(false);
     } catch (err) {
+      // Fail closed: if we can't confirm whether 2FA is on, we must not let the
+      // user skip the 2FA gate. The guard shows a retry screen instead.
       console.error("Could not load 2FA status:", err);
-      setTotpEnabled(false);
+      setSecurityError(true);
     }
     setTwoFactorPassed(sessionStorage.getItem(passedKey(u.uid)) === "1");
   }
@@ -50,6 +54,7 @@ export function AuthProvider({ children }) {
         setTotpEnabled(false);
         setTwoFactorPassed(false);
         setProfileError(false);
+        setSecurityError(false);
       }
       setLoading(false);
     });
@@ -80,6 +85,7 @@ export function AuthProvider({ children }) {
     twoFactorPassed,
     mustChangePassword: profile?.mustChangePassword === true,
     profileError,
+    securityError,
     loading,
     refresh,
     passTwoFactor,

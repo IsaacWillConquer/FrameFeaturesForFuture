@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../core/app_prefs.dart';
 
-// Text size + dark mode. Saved on the account, so the web app shows the same settings.
+// Text size + display options. Saved on the account, so the web app shows the same settings.
 class SettingsScreen extends StatefulWidget {
   final String uid;
   const SettingsScreen({super.key, required this.uid});
@@ -16,6 +16,9 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late String _size;
   late bool _dark;
+  late bool _contrast;
+  late bool _reduceMotion;
+  late bool _dyslexia;
 
   @override
   void initState() {
@@ -23,12 +26,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final prefs = AppPrefs.notifier.value;
     _size = (prefs['textSize'] as String?) ?? 'normal';
     _dark = prefs['dark'] == true;
+    _contrast = prefs['contrast'] == true;
+    _reduceMotion = prefs['reduceMotion'] == true;
+    _dyslexia = prefs['dyslexia'] == true;
   }
 
   Future<void> _save(String key, dynamic value) async {
     // Instant on this phone...
     AppPrefs.apply({...AppPrefs.notifier.value, key: value});
-    // ...and saved to the account (only this one setting, so web-only ones stay untouched)
+    // ...and saved to the account (only this one setting)
     try {
       await FirebaseFirestore.instance
           .collection(AppConfig.users)
@@ -66,6 +72,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: (v) {
                 setState(() => _dark = v);
                 _save('dark', v);
+              },
+            ),
+            SwitchListTile(
+              title: const Text('High contrast'),
+              subtitle: const Text('Stronger borders and darker text.'),
+              value: _contrast,
+              onChanged: (v) {
+                setState(() => _contrast = v);
+                _save('contrast', v);
+              },
+            ),
+            SwitchListTile(
+              title: const Text('Reduce motion'),
+              value: _reduceMotion,
+              onChanged: (v) {
+                setState(() => _reduceMotion = v);
+                _save('reduceMotion', v);
+              },
+            ),
+            SwitchListTile(
+              title: const Text('Dyslexia-friendly spacing'),
+              value: _dyslexia,
+              onChanged: (v) {
+                setState(() => _dyslexia = v);
+                _save('dyslexia', v);
               },
             ),
           ],

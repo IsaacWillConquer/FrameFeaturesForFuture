@@ -6,9 +6,11 @@ import FormField from "../core/ui/FormField";
 import Button from "../core/ui/Button";
 import Alert from "../core/ui/Alert";
 import AuthShell from "../core/layout/AuthShell";
+import { useI18n } from "../core/i18n/I18nProvider";
 
 export default function Register() {
   const { refresh } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -43,23 +45,23 @@ export default function Register() {
 
   return (
     <AuthShell
-      title="Create account"
-      subtitle="It only takes a minute."
-      footer={<>Already registered? <Link to="/login" className="font-medium text-primary underline">Log in</Link></>}
+      title={t("register_title", "Create account")}
+      subtitle={t("register_subtitle", "It only takes a minute.")}
+      footer={<>{t("register_have_account", "Already registered?")} <Link to="/login" className="font-medium text-primary underline">{t("register_login", "Log in")}</Link></>}
     >
       <Alert>{error}</Alert>
 
       <form onSubmit={handleRegister}>
-        <FormField id="name" label="Full name" value={name}
+        <FormField id="name" label={t("register_name", "Full name")} value={name}
           onChange={(e) => setName(e.target.value)} required autoComplete="name" />
-        <FormField id="email" label="Email" type="email" value={email}
+        <FormField id="email" label={t("register_email", "Email")} type="email" value={email}
           onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-        <FormField id="password" label="Password" type="password" value={password}
+        <FormField id="password" label={t("register_password", "Password")} type="password" value={password}
           onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password"
           hint="At least 8 characters." />
-        <FormField id="confirm" label="Confirm password" type="password" value={confirm}
+        <FormField id="confirm" label={t("register_confirm", "Confirm password")} type="password" value={confirm}
           onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
-        <Button type="submit" disabled={busy} className="w-full">{busy ? "Creating..." : "Register"}</Button>
+        <Button type="submit" disabled={busy} className="w-full">{busy ? "..." : t("register_submit", "Register")}</Button>
       </form>
     </AuthShell>
   );

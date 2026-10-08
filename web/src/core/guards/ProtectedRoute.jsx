@@ -8,7 +8,7 @@ import Spinner from "../ui/Spinner";
 // <ProtectedRoute>...</ProtectedRoute>              any verified user (and 2FA passed, if enabled)
 // <ProtectedRoute minRole="staff">...</ProtectedRoute>   staff and admin only
 export default function ProtectedRoute({ children, minRole = "user" }) {
-  const { user, profile, role, verified, totpEnabled, twoFactorPassed, mustChangePassword, profileError, loading, refresh } = useAuth();
+  const { user, profile, role, verified, totpEnabled, twoFactorPassed, mustChangePassword, profileError, securityError, loading, refresh } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -38,6 +38,24 @@ export default function ProtectedRoute({ children, minRole = "user" }) {
   }
 
   if (!verified) return <Navigate to="/verify-email" replace />;
+
+  // Fail closed: if we can't confirm the 2FA status, don't let the gate be skipped.
+  if (securityError && !twoFactorPassed) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-6 text-center">
+        <h2 className="text-lg font-semibold text-fg">Could not check your security settings</h2>
+        <p className="max-w-md text-fg-muted">
+          We couldn&apos;t confirm your two-factor status, so the app stays locked for safety.
+          Check your connection, then try again.
+        </p>
+        <div className="flex gap-3">
+          <Button onClick={() => refresh()}>Try again</Button>
+          <Button variant="secondary" onClick={handleLogout}>Log out</Button>
+        </div>
+      </div>
+    );
+  }
+
   if (totpEnabled && !twoFactorPassed) return <Navigate to="/2fa" replace />;
   // First-login forced password change (skip when already on that page).
   if (mustChangePassword && location.pathname !== "/change-password") {

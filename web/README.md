@@ -39,9 +39,21 @@ services, `config/appConfig.js` = roles, collection names, and navigation.
 
 ## v4.1 additions (Oct 7: audit fixes + features)
 - Fixed: atomic recovery-code burn (`runTransaction`), atomic wallet transfer (`writeBatch`), fail-closed on profile-load error, limiter escalates (2/4/8 min), face re-enroll replaces, 44px targets, 2fa_failed audit trail.
-- New: dashboard **charts + staff system stats** (zero-dep `core/ui/BarChart.jsx`), announcement **edit** (admin), **first-login forced change-password** (`/change-password`, `mustChangePassword` flag), **PWA-lite** (`public/manifest.json` + icon, no service worker), TTS **stop toggle + speed slider + read-page button** (topbar), **voice input** in announcements/SMS/wallet/check-in, **pagination** (CRUD kit, audit log, my activity), staff **notify-user** action + users search/CSV, **liveness-lite** (two frames, movement check).
+- New: dashboard **charts + staff system stats** (zero-dep `core/ui/BarChart.jsx`), announcement **edit** (admin), **first-login forced change-password** (`/change-password`, `mustChangePassword` flag), **PWA** (`public/manifest.json` + PNG icons; service worker + icons added Oct 8), TTS **stop toggle + speed slider + read-page button** (topbar), **voice input** in announcements/SMS/wallet/check-in, **pagination** (CRUD kit, audit log, my activity), staff **notify-user** action + users search/CSV, **liveness-lite** (two frames, movement check).
 - Failed password logins are not audit-logged (rules require a signed-in uid) — failed 2FA attempts are.
 
-## Status (Oct 7, 2026)
-Lint: 0 errors (26 non-blocking warnings). Build: success. Not yet live-tested against a real
-Firebase project (see docs/AWA-test-guide.md, T1–T95) and not yet deployed.
+## v5 additions (Oct 8: audit fixes, extras, cleanup)
+- **Rules fixed:** `ai_chats` read (AI history), wallet transfers (credit-only `walletCreditOk`),
+  `transactions` create scoped. New `public_profiles` (wallet recipients) and `support_requests`.
+- **Wallet** now lists recipients from `public_profiles`, surfaces errors, and has **scan-to-pay QR**
+  (`core/qr/paymentQR.js`) plus a "my receive code".
+- **Fallback chain is functional:** "Ask staff for help" files a real support request; staff resolve
+  at `/admin/support`. 2FA status now **fails closed**.
+- **Extras:** **voice commands** (`core/a11y/voiceCommands.js` + topbar mic), **i18n** (English +
+  Filipino; toggle in the topbar and `/accessibility`), **PWA service worker** + real PNG icons.
+- **Cleanup:** removed `core/ui/Toast.jsx`, `core/ui/IconButton.jsx`, and `getFaceChecks` (all dead).
+  Status messages rely on `Alert` ARIA live regions.
+
+## Status (Oct 8, 2026)
+Lint: 0 errors / 0 warnings. Build: success. Not yet live-tested against a real Firebase project
+(see docs/AWA-test-guide.md, T1–T95) and not yet deployed.

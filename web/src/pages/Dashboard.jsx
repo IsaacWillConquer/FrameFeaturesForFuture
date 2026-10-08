@@ -11,6 +11,7 @@ import Card, { CardHeader, CardBody } from "../core/ui/Card";
 import StatCard from "../core/ui/StatCard";
 import BarChart from "../core/ui/BarChart";
 import Badge from "../core/ui/Badge";
+import Alert from "../core/ui/Alert";
 import EmptyState from "../core/ui/EmptyState";
 import Spinner from "../core/ui/Spinner";
 
@@ -22,6 +23,7 @@ export default function Dashboard() {
 
   const [activity, setActivity] = useState([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
+  const [activityError, setActivityError] = useState("");
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
@@ -33,8 +35,10 @@ export default function Dashboard() {
         const time = (l) => l.createdAt?.toMillis?.() ?? 0;
         list.sort((a, b) => time(b) - time(a));
         setActivity(list);
-      } catch {
+        setActivityError("");
+      } catch (err) {
         setActivity([]);
+        setActivityError(err.code === "permission-denied" ? "Blocked by database rules." : err.message);
       }
       setLoadingActivity(false);
     }
@@ -90,6 +94,8 @@ export default function Dashboard() {
         description="Here's a snapshot of your account."
         actions={<Badge variant="primary">{role}</Badge>}
       />
+
+      <Alert>{activityError}</Alert>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Unread notifications" value={unread} icon={Bell} hint={unread === 0 ? "All caught up" : "Needs attention"} />

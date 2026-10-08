@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
+import { useI18n } from "../i18n/I18nProvider";
 import IdleGuard from "../security/IdleGuard";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
 export default function Layout() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -24,7 +26,7 @@ export default function Layout() {
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-surface focus:px-3 focus:py-2 focus:rounded print:hidden"
       >
-        Skip to main content
+        {t("skip_link", "Skip to main content")}
       </a>
 
       {user && <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />}

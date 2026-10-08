@@ -44,7 +44,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
     });
     try {
       final ok = _recovery
-          ? await TotpService.useRecoveryCode(widget.uid, widget.totp, _code.text)
+          ? await TotpService.useRecoveryCode(widget.uid, _code.text)
           : TotpService.checkCode(widget.totp['secret'] as String, _code.text);
       if (!mounted) return;
       if (ok) {
@@ -54,6 +54,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
         widget.onPassed();
         return;
       }
+      await AuthService.logAction(widget.uid, '2fa_failed', 'mobile');
       setState(() => _error = 'That code is not correct.');
     } catch (_) {
       if (mounted) setState(() => _error = 'Could not check the code. Try again.');

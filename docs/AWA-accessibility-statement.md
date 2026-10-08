@@ -20,7 +20,7 @@ still register, sign in securely, and use every core feature.
 - Minimum **44×44px** touch targets on all interactive controls.
 - Visible **focus ring** on keyboard focus (never `outline: none`).
 - **Skip to main content** link as the first focusable element.
-- Toasts and important status messages use **`aria-live`** so screen readers announce them.
+- Important status messages use **ARIA live regions** (`role="alert"` / `role="status"`) so screen readers announce them.
 - Tables have captions; decorative icons are `aria-hidden`.
 
 **Accessibility settings** (saved to the user's account, so they follow the person to mobile):

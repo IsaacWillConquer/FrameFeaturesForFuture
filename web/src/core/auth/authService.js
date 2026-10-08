@@ -40,6 +40,21 @@ export function authErrorMessage(err) {
   return messages[err.code] || err.message;
 }
 
+// A small public mirror (uid, name, email) any signed-in user can read. Kept in
+// sync here so peer features (e.g. wallet recipients) work without exposing the
+// private users collection. Best-effort: never block a successful auth flow.
+async function upsertPublicProfile(user, name) {
+  try {
+    await setDoc(
+      doc(db, COLLECTIONS.publicProfiles, user.uid),
+      { uid: user.uid, name: name || user.displayName || "", email: user.email || "" },
+      { merge: true }
+    );
+  } catch (err) {
+    console.error("Could not update public profile:", err);
+  }
+}
+
 // Creates users/{uid} the first time someone signs in. Role is always "user" here.
 async function ensureUserDoc(user, name) {
   const ref = doc(db, COLLECTIONS.users, user.uid);
@@ -53,6 +68,7 @@ async function ensureUserDoc(user, name) {
       createdAt: serverTimestamp(),
     });
   }
+  await upsertPublicProfile(user, name);
 }
 
 export async function registerUser(name, email, password) {
@@ -103,6 +119,7 @@ export async function updateDisplayName(name) {
   if (!auth.currentUser) return;
   await updateProfile(auth.currentUser, { displayName: name });
   await updateDoc(doc(db, COLLECTIONS.users, auth.currentUser.uid), { name });
+  await upsertPublicProfile(auth.currentUser, name);
   await logAction(auth.currentUser.uid, "profile_update", "name");
 }
 

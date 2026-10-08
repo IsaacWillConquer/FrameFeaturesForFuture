@@ -4,16 +4,26 @@ import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../core/auth_service.dart';
+import 'announcements_screen.dart';
+import 'change_password_screen.dart';
+import 'checkin_screen.dart';
 import 'scan_screen.dart';
 import 'settings_screen.dart';
+import 'wallet_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final User user;
   final Map<String, dynamic>? profile; // the users/{uid} doc, loaded by AuthGate
   const HomeScreen({super.key, required this.user, this.profile});
 
+  String get _name =>
+      (profile?['name'] as String?)?.isNotEmpty == true
+          ? profile!['name'] as String
+          : (user.email ?? '');
+
   @override
   Widget build(BuildContext context) {
+    final role = (profile?['role'] as String?) ?? 'user';
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppConfig.appName),
@@ -33,22 +43,44 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           children: [
             Text(
-              'Hello, ${profile?['name'] ?? user.email ?? ''}\nRole: ${profile?['role'] ?? 'user'}',
+              'Hello, $_name\nRole: $role',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ScanScreen()),
-              ),
-              child: const Text('Scan QR code'),
-            ),
+            _Action('Scan QR code', Icons.qr_code_scanner,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanScreen()))),
+            _Action('Wallet', Icons.account_balance_wallet,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => WalletScreen(uid: user.uid, name: _name)))),
+            _Action('Check-in', Icons.how_to_reg,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => CheckInScreen(uid: user.uid, name: _name)))),
+            _Action('Announcements', Icons.campaign,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => AnnouncementsScreen(uid: user.uid, role: role)))),
+            _Action('Change password', Icons.lock_reset,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChangePasswordScreen(uid: user.uid)))),
             const SizedBox(height: 24),
             Text('Notifications', style: Theme.of(context).textTheme.titleLarge),
             _Notifications(uid: user.uid),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _Action extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  const _Action(this.label, this.icon, this.onTap);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(label),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
       ),
     );
   }
@@ -78,25 +110,45 @@ class _Notifications extends StatelessWidget {
             return tb.compareTo(ta);
           });
         if (docs.isEmpty) return const Text('No notifications yet.');
+        final unread = docs.where((d) => d.data()['read'] != true).toList();
         return Column(
-          children: docs.take(10).map((d) {
-            final n = d.data();
-            final unread = n['read'] != true;
-            return ListTile(
-              title: Text('${n['title'] ?? ''}${unread ? ' (unread)' : ''}',
-                  style: TextStyle(fontWeight: unread ? FontWeight.bold : FontWeight.normal)),
-              subtitle: Text('${n['message'] ?? ''}'),
-              onTap: unread
-                  ? () async {
-                      try {
-                        await d.reference.update({'read': true});
-                      } catch (_) {
-                        // Offline or rules: stays unread, no crash.
-                      }
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (unread.isNotEmpty)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () async {
+                    final batch = FirebaseFirestore.instance.batch();
+                    for (final d in unread) {
+                      batch.update(d.reference, {'read': true});
                     }
-                  : null,
-            );
-          }).toList(),
+                    try {
+                      await batch.commit();
+                    } catch (_) {/* offline or rules: leave as is */}
+                  },
+                  child: const Text('Mark all as read'),
+                ),
+              ),
+            ...docs.take(10).map((d) {
+              final n = d.data();
+              final isUnread = n['read'] != true;
+              return ListTile(
+                title: Text('${n['title'] ?? ''}${isUnread ? ' (unread)' : ''}',
+                    style: TextStyle(fontWeight: isUnread ? FontWeight.bold : FontWeight.normal)),
+                subtitle: Text('${n['message'] ?? ''}'),
+                onTap: isUnread
+                    ? () async {
+                        try {
+                          await d.reference.update({'read': true});
+                        } catch (_) {
+                          // Offline or rules: stays unread, no crash.
+                        }
+                      }
+                    : null,
+              );
+            }),
+          ],
         );
       },
     );

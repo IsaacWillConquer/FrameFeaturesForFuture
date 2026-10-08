@@ -1,6 +1,27 @@
+# dependencies / build output
 node_modules/
 dist/
-.env
-.firebase/
 build/
 .dart_tool/
+
+# local config & secrets
+.env
+.env.*
+!.env.example
+
+# firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# generated Flutter/Firebase config (run `flutterfire configure`)
+mobile/lib/firebase_options.dart
+
+# editors / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+Thumbs.db:encryptable

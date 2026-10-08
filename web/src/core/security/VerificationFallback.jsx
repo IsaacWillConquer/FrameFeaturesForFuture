@@ -4,6 +4,8 @@ import { unlockWithBiometric, biometricsSupported } from "./webauthnService";
 import { compareFace, getFaceDescriptors } from "./faceService";
 import { getTotp, checkCode } from "./totpService";
 import { recordFaceCheck } from "./livenessService";
+import { createSupportRequest } from "../support/supportService";
+import { logAction } from "../logger";
 import Tabs from "../ui/Tabs";
 import Button from "../ui/Button";
 import Alert from "../ui/Alert";
@@ -12,13 +14,16 @@ import FaceCapture from "./FaceCapture";
 
 // A reusable verification ladder. The user can pick any method that works for
 // them; nobody is ever locked out. Order shown: biometric -> face -> code.
-// Falls back to staff assistance if all methods are unavailable.
-export default function VerificationFallback({ uid, onVerified }) {
+// Falls back to staff assistance (a real support request) if all are unusable.
+export default function VerificationFallback({ uid, name, email, onVerified }) {
   const [method, setMethod] = useState(biometricsSupported() ? "biometric" : "code");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [helpNote, setHelpNote] = useState("");
+  const [helpSent, setHelpSent] = useState(false);
+  const [helpBusy, setHelpBusy] = useState(false);
 
   async function verifyBiometric() {
     setError(""); setBusy(true);
@@ -68,6 +73,21 @@ export default function VerificationFallback({ uid, onVerified }) {
     setBusy(false);
   }
 
+  // Files a real support request so staff can verify the person in person.
+  async function askStaff(e) {
+    e.preventDefault();
+    setError(""); setMessage(""); setHelpBusy(true);
+    try {
+      await createSupportRequest(uid, { name, email, reason: "verification", note: helpNote });
+      await logAction(uid, "support_request", "verification");
+      setHelpSent(true);
+      setMessage("Sent to staff. They can verify you in person — watch your notifications.");
+    } catch (err) {
+      setError(err?.message || "Could not send the request. Please try again.");
+    }
+    setHelpBusy(false);
+  }
+
   const tabs = [
     {
       id: "biometric",
@@ -106,13 +126,22 @@ export default function VerificationFallback({ uid, onVerified }) {
       <Alert type="info">{message}</Alert>
 
       <div className="mt-6 border-t border-border pt-4">
-        <button
-          type="button"
-          onClick={() => setMessage("Asked staff for help. They can verify you in person.")}
-          className="inline-flex items-center gap-2 text-sm text-fg-muted underline min-h-11"
-        >
-          <LifeBuoy className="h-4 w-4" /> Can&apos;t use any method? Ask staff for help
-        </button>
+        {helpSent ? (
+          <p className="flex items-center gap-2 text-sm text-success">
+            <LifeBuoy className="h-4 w-4" /> Request sent to staff.
+          </p>
+        ) : (
+          <form onSubmit={askStaff} className="max-w-md">
+            <p className="mb-2 flex items-center gap-2 text-sm text-fg-muted">
+              <LifeBuoy className="h-4 w-4" /> Can&apos;t use any method? Ask staff to verify you in person.
+            </p>
+            <FormField id="vf-help" label="Message to staff (optional)" value={helpNote}
+              onChange={(e) => setHelpNote(e.target.value)} />
+            <Button type="submit" variant="secondary" disabled={helpBusy}>
+              {helpBusy ? "Sending..." : "Send help request"}
+            </Button>
+          </form>
+        )}
       </div>
     </div>
   );

@@ -5,12 +5,15 @@
 **Mode:** Solo-leaning · own new Firebase project · stay free · built to be reusable for capstone
 **Stand-in reference until topic is revealed:** Barangay Health Portal (rebuilt in React)
 
-> **Status snapshot (Oct 7, 2026, after audit + fixes):** Web v3 is fully built and committed, plus an
-> Oct 7 code-audit pass: 11 bug fixes (atomic recovery/wallet writes, fail-closed guards, limiter
-> escalation, face + a11y fixes) and 10 features (dashboard charts + admin stats, announcement edit,
-> first-login forced change-password, PWA-lite, TTS stop/rate/read-page, voice input coverage,
-> pagination, 2fa_failed trail, staff notify-user, liveness-lite). Lint: 0 errors. Build: success.
-> Mobile `mobile/` scaffolded + fixed; `flutterfire configure` still needs `firebase login`.
+> **Status snapshot (Oct 8, 2026):** Web v3 is fully built. The Oct 7 audit pass added atomic
+> recovery/wallet writes, fail-closed guards, limiter escalation and 10 features (dashboard charts +
+> admin stats, announcement edit, first-login forced change-password, PWA, TTS, voice input,
+> pagination, 2fa_failed trail, notify-user, liveness-lite). The Oct 8 audit fixed the remaining
+> rules bugs (`ai_chats` read, wallet transfers, AI history), added `public_profiles` and
+> `support_requests`, made the verification fallback chain functional, added a real PWA service
+> worker + icons, i18n, voice commands and scan-to-pay QR, and brought mobile up to parity for
+> register/forgot/lockout/idle-logout/prefs/wallet/check-in/announcements. Web lint 0/0, build
+> success; mobile analyze clean except the expected `firebase_options.dart` import.
 > **Nothing has been live-tested or deployed yet** — that is the biggest open item before reveal day.
 > Full details: `docs/HANDOFF.md`.
 
@@ -35,9 +38,9 @@ FinalProject_AWA/
 Rule: `core/` never imports from `modules/`.
 Roles: Admin ⊃ Staff ⊃ User (checked by level number).
 
-Fixed Firestore collections: `users`, `logs`, `notifications`, `announcements`, `sms_outbox`,
-`totp`, `login_history`, `trusted_devices`, `webauthn_credentials`, `face_descriptors`, `wallets`,
-`transactions`, `checkins`, `ai_chats`, plus demo `items`.
+Fixed Firestore collections: `users`, `public_profiles`, `support_requests`, `logs`, `notifications`,
+`announcements`, `sms_outbox`, `totp`, `login_history`, `trusted_devices`, `webauthn_credentials`,
+`face_descriptors`, `wallets`, `transactions`, `checkins`, `ai_chats`, plus demo `items`.
 Topic collections are added on Oct 10.
 
 ---
@@ -56,7 +59,7 @@ Topic collections are added on Oct 10.
 - [x] AuthProvider returns user + role + emailVerified (+ 2FA flag)
 - [x] ProtectedRoute with minRole (RoleRoute merged into it)
 - [x] Fix Login.jsx (navigate during render), email input type
-- [x] UI kit built accessible from day 1: semantic HTML, labels, focus ring, skip link, 44px targets, aria-live toasts
+- [x] UI kit built accessible from day 1: semantic HTML, labels, focus ring, skip link, 44px targets, aria-live status messages
 
 ### Fri Oct 2 — Register / login done properly
 - [x] Register creates Firestore `users/{uid}` doc with role
@@ -128,7 +131,7 @@ Topic collections are added on Oct 10.
 ## 3. Feature priorities
 
 **P1 — Required by the sheet:** email verification, 2FA, QR code, face recognition, biometrics, notifications
-**P2 — Core:** auth flows, role guards, user management, profile, audit log, CRUD kit, tables, toasts/dialogs, dark mode, real-time, charts, CSV/print reports, error pages, **accessibility foundation**
+**P2 — Core:** auth flows, role guards, user management, profile, audit log, CRUD kit, tables, modals/dialogs, dark mode, real-time, charts, CSV/print reports, error pages, **accessibility foundation**
 **P3 — Security + a11y extras:** login limiter, idle logout, login history, trusted devices, re-verify for sensitive actions, liveness-lite, fallback chain, **accessibility settings page, read-aloud (TTS)**
 **P4 — Capstone extras (simulated/free):** quick login, QR payment wallet, SMS outbox, AI helper, check-in module, ID card, PWA, **voice input + voice commands**
 **P5 — Capstone later (needs Node/Express + Firebase Admin):** real SMS, real payments, passkey login, QR-scan login, server-side 2FA, AI with own key

@@ -1,6 +1,6 @@
 # AWA — Handoff doc (for a new model / new session)
 
-Read this top to bottom, then continue work. Last updated: **Oct 8, 2026** (lint fixes + docs done, uncommitted).
+Read this top to bottom, then continue work. Last updated: **Oct 8, 2026 (audit fixes, extras, and cleanup — committed)**.
 
 ---
 
@@ -45,9 +45,9 @@ FinalProject_AWA/
 
 **Invariant: `core/` never imports from `modules/`.** Topic code lives only in `modules/`.
 
-## 4. Current state (as of Oct 7, 2026, after audit + fixes)
+## 4. Current state (as of Oct 8, 2026, after audit + fixes)
 
-**Done and committed (6 commits on master, no remote):**
+**Done and committed (7 commits on master, no remote):**
 - Web v3 complete: design system + dark/high-contrast tokens, accessible UI kit, app shell,
   all pages, config-driven CRUD kit (`core/crud/CrudPage.jsx`).
 - P1 security: email verification enforced, TOTP 2FA + hashed recovery codes, QR gen/scan,
@@ -62,25 +62,48 @@ FinalProject_AWA/
   testFace checks all; face-check rows filtered from Recent logins; 44px targets; IdleGuard tokens.
 - **Oct 7 features** (`6a68fec`): zero-dep `BarChart` + dashboard 7-day chart + staff system stats;
   announcement edit (admin-only); first-login forced change-password (`mustChangePassword` flag +
-  `/change-password` gate); PWA-lite (manifest + icon + meta, no service worker); TTS stop toggle +
+  `/change-password` gate); PWA (manifest + icon + meta; service worker + PNG icons added Oct 8); TTS stop toggle +
   rate slider + read-page button in topbar; voice input in announcements/SMS/wallet/check-in;
   pagination in CRUD kit + audit log + my activity; `2fa_failed` audit trail; staff notify-user +
   users search/CSV; liveness-lite (two frames 1s apart, movement check).
 - Mobile (`3d9dafe`, `7349049`): `mobile/` scaffolded from `mobile-src/lib`, deps + 3 Android edits,
   unhandled-async guards, `AppConfig.appName` used everywhere. `flutter analyze`: only the 2 expected
   `firebase_options.dart` errors remain.
-- Lint: **0 errors** (26 warnings, all non-blocking). Build: success.
+- Lint: **0 errors / 0 warnings**. Build: success.
 - **Oct 8:** all 26 lint warnings fixed (0 errors / 0 warnings, build clean) + the 4 remaining
-  docs written (ERD, user manual, a11y statement, defense notes). Both are in the working copy,
-  **uncommitted**.
+  docs written (ERD, user manual, a11y statement, defense notes).
+
+**Oct 8 — audit fixes, extensions, and cleanup (committed):**
+- **Rules fixed:** `ai_chats` read used `request.resource` on a read (blocked history) — now keyed
+  on `resource`; added `public_profiles` (safe uid/name/email mirror, readable by any signed-in
+  user) and `support_requests`; `wallets` now allow credit-only cross-user writes so a normal user
+  can send a simulated payment. `transactions` create is scoped to the owner/sender.
+- **Wallet:** recipient list reads `public_profiles` (the old `users` query was denied for normal
+  users); errors are surfaced; added **scan-to-pay QR** (encode/parse in `core/qr/paymentQR.js`,
+  plus a "my receive code").
+- **Fallback chain is now functional + honest:** "Ask staff for help" files a real support request
+  (`core/support/supportService.js`), staff resolve them at `/admin/support` (new nav + route).
+- **2FA fails closed:** `AuthProvider.securityError` + `ProtectedRoute` locked screen if the
+  `totp/{uid}` read fails (previously it silently disabled 2FA).
+- **PWA install:** `public/sw.js` (registered in `main.jsx`, production only) + real PNG icons
+  (`icon-192.png`, `icon-512.png`) + updated `manifest.json` / `index.html`.
+- **Deferred extras:** voice commands (`core/a11y/voiceCommands.js` + topbar mic), minimal **i18n**
+  (`core/i18n/`, English + Filipino, toggle in topbar + `/accessibility`), scan-to-pay QR.
+- **Mobile parity** (edit `mobile-src/lib`, then copy to `mobile/lib`): register, forgot password,
+  forced first-login change, login lockout, idle logout, contrast/reduce-motion/dyslexia prefs,
+  wallet, check-in, announcements, mark-all-read, transactional recovery-code burn, 2fa_failed log.
+  `flutter analyze`: only the 2 expected `firebase_options.dart` errors.
+- Web lint 0/0; web build succeeds.
+- **Cleanup:** removed dead code (`core/ui/Toast.jsx` + its provider mount, `core/ui/IconButton.jsx`,
+  `getFaceChecks`) and the redundant `modules/.gitkeep`; `.gitignore` covers build output. Docs
+  refreshed for the new collections and to drop the stale "toasts"/"PWA-lite"/"26 warnings" claims.
 
 **NOT done (in order):**
-1. Commit the Oct 8 working copy (16 lint-fix files + 4 new docs).
-2. `firebase login` + `flutterfire configure` in `mobile/` (generates `firebase_options.dart`,
-   registers the Android app in the Firebase console). **Blocked: needs the user's Firebase login.**
-3. Run the live test pass (T1–T95 + M1–M13) against the real Firebase project, then deploy to Hosting.
+1. Commit the working copy (web + mobile + docs).
+2. `firebase login` + `flutterfire configure` in `mobile/` (generates `firebase_options.dart`).
+3. Publish the updated `web/firestore.rules`, then run the live test pass (T1–T95 + M1–M13) and deploy.
 4. Reveal day (Oct 10): fill feature map, create `modules/<entity>/` per topic entity.
-5. Optional: skipped features (voice commands, i18n, scan-to-pay).
+5. Mobile-only gaps + skipped features (see TODO.md §6).
 
 ## 5. Run commands
 
@@ -115,7 +138,7 @@ All 3 Android edits are already applied. No Android device was connected on Oct 
 - All collection names come from `COLLECTIONS` in `appConfig.js` — never hardcode a collection name.
 - Navigation lives in `NAV` in `appConfig.js` (single source for sidebar + dashboard quick actions).
 - New topic collection = copy the `items` block in `firestore.rules` + a config for `CrudPage.jsx`.
-- Accessibility is a requirement, not polish: semantic HTML, labels, 44px targets, aria-live toasts,
+- Accessibility is a requirement, not polish: semantic HTML, labels, 44px targets, aria-live status messages,
   focus ring, skip link, every verification method has a fallback. WCAG 2.1 AA target (Lighthouse 90+).
 
 ## 7. Data model (Firestore)
@@ -123,6 +146,8 @@ All 3 Android edits are already applied. No Android device was connected on Oct 
 | Collection | Fields |
 |---|---|
 | `users/{uid}` | email, name, role, active, prefs{textSize, dark, contrast, reduceMotion, dyslexia}, createdAt |
+| `public_profiles/{uid}` | uid, name, email (safe mirror any signed-in user can read — wallet recipients) |
+| `support_requests/{auto}` | uid, name, email, reason, note, status, createdAt (+ resolvedBy/resolvedAt) |
 | `logs/{auto}` | uid, action, details, createdAt |
 | `notifications/{auto}` | userId, title, message, read, createdAt |
 | `totp/{uid}` | secret, enabled, recovery[] (SHA-256 hashes only), createdAt |
@@ -190,15 +215,17 @@ load/login. Full plain-language explanations: `docs/AWA-security-explained.md`.
 
 ## 12. Next steps (prioritized)
 
-1. **Commit the Oct 8 working copy:** 16 files of lint fixes (now 0 warnings) + 4 new docs
-   (`AWA-ERD.md`, `AWA-user-manual.md`, `AWA-accessibility-statement.md`, `AWA-defense-notes.md`).
+1. **Commit the working copy:** rules + new web services/pages (public_profiles, support requests,
+   payment QR, i18n, voice commands, PWA), mobile parity, and docs. See `TODO.md` §1.
 2. **Finish mobile setup:** `firebase login`, then in `mobile/`: `flutterfire configure` (pick the AWA
    Firebase project, Android only), then `flutter run` on a phone. Then test guide Part C (M1–M13).
-3. **Web live test + deploy:** test guide T1–T95 (Parts A–B13), `npm run deploy`, then T66–T71 on the live URL.
+3. **Publish rules + Web live test + deploy:** re-publish `web/firestore.rules`, test guide T1–T95
+   (Parts A–B13), `npm run deploy`, then T66–T71 on the live URL.
 4. **Reveal day (Oct 10):** fill the feature map in `docs/AWA-blueprint-and-todo.md` §4, create one
    `modules/<entity>/` folder per topic entity, apply the CRUD kit, copy the rules block per collection.
-5. Then per request: skipped features (voice commands, i18n, scan-to-pay QR).
-5. Cut order if time slips: P4 extras → P3 → P2 polish. P1 + auth + roles + rules never get cut.
+5. Still optional: mobile-only gaps (Google sign-in, WebAuthn/face, 2FA enable, profile edit, admin
+   screens, TTS) and skipped features. Cut order if time slips: P4 extras → P3 → P2 polish.
+   P1 + auth + roles + rules never get cut.
 
 ## 13. Dates
 

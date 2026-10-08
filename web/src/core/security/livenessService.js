@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { COLLECTIONS } from "../../config/appConfig";
 
@@ -16,12 +16,6 @@ export function recordFaceCheck(uid, passed) {
     detail: passed ? "face match (liveness-lite)" : "face check failed",
     createdAt: serverTimestamp(),
   });
-}
-
-export async function getFaceChecks(uid) {
-  const snap = await getDocs(query(collection(db, COLLECTIONS.loginHistory), where("uid", "==", uid)));
-  const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  return list.filter((r) => r.deviceId === "face").slice(0, 10);
 }
 
 // Measure how much two descriptors differ (plain distance, no threshold).

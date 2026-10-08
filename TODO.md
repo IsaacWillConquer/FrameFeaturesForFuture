@@ -1,54 +1,53 @@
 # TODO — pick up here
 
-**Where I left off (Oct 7):** all audit fixes + features are built and committed (6 commits, see
-`git log --oneline`). Nothing live-tested or deployed yet. Full context: `docs/HANDOFF.md`.
+**Updated Oct 8, 2026.** Web is built, lint-clean and **builds**. Mobile source is lint-clean
+except the expected `firebase_options.dart` import (needs `firebase login`). Nothing is deployed
+or live-tested yet. Full context: `docs/HANDOFF.md`.
 
-**Oct 8 update:** the 26 lint warnings are FIXED (0 errors / 0 warnings, build clean) and the 4
-remaining docs (ERD, user manual, a11y statement, defense notes) are written — both are in the
-working copy, **NOT committed yet**. Everything else below is still open.
+## Done — don't redo
+- Web v3: design system, app shell, all pages, CRUD kit, P1 security, security extras, P4 extras
+  (wallet, SMS, AI, check-in, voice, TTS, PWA).
+- Firestore rules hardened: `ai_chats` read fixed (was blocking history), `public_profiles` +
+  `support_requests` added, and wallet credits are now rules-safe. **Wallet transfers and AI chat
+  history work for normal users** (they used to fail with permission-denied).
+- Wallet recipients now come from `public_profiles` (no longer blocked by the `users` rule).
+- Fallback chain is functional and honest: "Ask staff for help" files a real support request, and
+  staff resolve them at **`/admin/support`**. 2FA status now **fails closed**.
+- PWA install: manifest + real PNG icons (192/512) + minimal service worker.
+- Deferred extras built: **scan-to-pay QR** (wallet), **voice commands**, **i18n** (shell/nav/auth,
+  English + Filipino, language toggle).
+- Mobile parity (source in `mobile-src/lib`, synced to `mobile/lib`): register, forgot password,
+  forced first-login change, login lockout, idle logout, high-contrast/reduce-motion/dyslexia prefs,
+  QR scan, wallet, check-in, announcements, mark-all-read notifications. `flutter analyze` = only
+  the 2 expected `firebase_options.dart` errors.
+- Lint: web 0 errors / 0 warnings; web build success. Docs: ERD, user manual, a11y statement,
+  defense notes.
 
-## 1. Admin account (5 min)
-- [ ] Register at http://localhost:5173/register with a real email (Gmail alias trick: `you+admin@gmail.com`)
-      — this doubles as tests T1–T4
-- [ ] Click the verification link in the email, return, press "I verified my email"
-- [ ] Firebase console → Firestore → `users` → your doc → edit `role` → `admin`
-      (rules block self-promotion, so this MUST be done in the console)
-- [ ] Log out + log back in (role loads at login/refresh)
+## 1. Commit the working copy
+- [ ] `git add -A` and commit (rules, new services/pages, PWA, i18n, voice commands, mobile, docs).
 
-## 2. Live test pass — web (biggest open item)
-- [ ] `npm run dev` in `web/` (dev server is NOT running when you come back), open in Chrome, F12 → Console
-- [ ] Firebase console pre-check: Email/Password + Google auth on, Firestore created,
-      `web/firestore.rules` pasted/published in Rules
-- [ ] Run tests T1–T95 in `docs/AWA-test-guide.md` (B1–B3 first — if they fail, everything else depends on them)
-- [ ] New features: T86–T95 (charts, first-login password, PWA, TTS, pagination, liveness, notify)
-- [ ] Record failures with the Part E bug-report template, fix in one batch
+## 2. Firebase setup (needs your console / login)
+- [ ] Email/Password + Google auth ON; Firestore created; **publish `web/firestore.rules`**
+      (required — the old rules break wallet transfers, AI history, and `/admin/support`).
+- [ ] Make the first admin: register on web, then console → `users` → your doc → `role` = `admin`.
 
-## 3. Deploy (needed for QR camera + WebAuthn — they require HTTPS)
-- [ ] `npm install -g firebase-tools` (already installed) → `firebase login`
-- [ ] In `web/`: `firebase use --add`, then `npm run deploy`
-- [ ] Test on the live URL (T66–T70) + QR camera scan on your PHONE (T71)
+## 3. Live test + deploy (QR camera + WebAuthn need HTTPS)
+- [ ] `npm run dev` in `web/`; run T1–T95 in `docs/AWA-test-guide.md`.
+- [ ] `npm run deploy`; test the live URL (T66–T70) + QR camera on your PHONE (T71).
 
 ## 4. Mobile (blocked on `firebase login`)
-- [ ] `mobile/` is already scaffolded (deps + Android edits applied) — DON'T redo flutter create
-- [ ] `firebase login`, then in `mobile/`: `flutterfire configure` (pick the AWA project, Android only)
-      → creates `lib/firebase_options.dart`
-- [ ] Plug in phone (USB debugging), `flutter run`
-- [ ] Tests M1–M13 in `docs/AWA-test-guide.md` Part C
+- [ ] In `mobile/`: `flutterfire configure` (AWA project, Android) → creates `firebase_options.dart`.
+- [ ] `flutter run`; then tests M1–M13.
 
-## 5. Reveal day (Oct 10) — topic modules (biggest share of the grade)
-- [ ] List roles, entities, collections; fill the feature map in `docs/AWA-blueprint-and-todo.md` §4
-- [ ] One `web/src/modules/<entity>/` folder per entity — reuse the CRUD kit
-      (`core/crud/CrudPage.jsx` + a config file, see `modules/demo/itemsConfig.js`)
-- [ ] Copy the `items` block in `web/firestore.rules` for each new collection
-- [ ] Edit `web/src/config/appConfig.js` (app name, collections, nav) — the ONE file to change
+## 5. Reveal day (Oct 10) — topic modules
+- [ ] Fill the feature map in `docs/AWA-blueprint-and-todo.md` §4.
+- [ ] One `web/src/modules/<entity>/` folder per entity (CRUD kit + config).
+- [ ] Copy the `items` rules block per new collection; edit `web/src/config/appConfig.js`.
 
-## 6. Optional / skipped (only if time)
-- [ ] Voice commands, i18n, scan-to-pay QR (deliberately skipped — low grade value)
-- [x] 26 non-blocking lint warnings — DONE Oct 8: 0 errors / 0 warnings (uncommitted)
-- [x] Remaining docs — DONE Oct 8: `docs/AWA-ERD.md`, `docs/AWA-user-manual.md`,
-      `docs/AWA-accessibility-statement.md`, `docs/AWA-defense-notes.md` (untracked — commit them)
-- [ ] Mobile parity extras: register, forgot password, lockout, idle logout, contrast settings,
-      wallet, check-ins, announcements (Oct 22-25 window)
+## 6. Still optional (not blockers)
+- [ ] Mobile-only gaps: Google sign-in, WebAuthn/face enrollment, 2FA enable/disable, profile edit,
+      admin screens (users/audit/support), TTS read-aloud.
+- [ ] Lighthouse a11y audit + NVDA/TalkBack pass (needs the live app).
 
 ## Dates
 Health break Oct 7–9 · Dev window Oct 10–29 · **Submit Oct 28 (real deadline)**

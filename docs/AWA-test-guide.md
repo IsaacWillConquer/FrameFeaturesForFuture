@@ -1,8 +1,8 @@
-# AWA test guide (web v4 + mobile v2)
+# AWA test guide (web v5 + mobile v3)
 
 Goal: find what's broken, not fix it. Tick the box if it passes. If it fails, write the test ID, what you expected, what happened, and the exact error (see Part E). Send me the list.
 
-> Nothing has been live-tested yet (as of Oct 7, 2026) — this whole guide is open. Current state
+> Nothing has been live-tested yet (as of Oct 8, 2026) — this whole guide is open. Current state
 > and commands: `docs/HANDOFF.md`.
 
 ---

@@ -14,6 +14,17 @@ service cloud.firestore {
     function isStaffUp() {
       return signedIn() && (myRole() == 'staff' || myRole() == 'admin');
     }
+    // The simulated wallet transfers credits to another person's wallet. A
+    // signed-in user may only ever ADD to someone else's balance (a credit),
+    // never take from it. The owner/staff rule above still covers debits.
+    function walletCreditOk(uid) {
+      return signedIn()
+        && request.resource.data.balance is number
+        && request.resource.data.balance >= 0
+        && (!exists(/databases/$(database)/documents/wallets/$(uid))
+            || (request.resource.data.balance > resource.data.balance
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance'])));
+    }
 
     // Users: anyone can create ONLY their own doc as role 'user'.
     // Only admins can change roles. Make your first admin by editing the role in the Firebase console.
@@ -28,6 +39,26 @@ service cloud.firestore {
                     && request.resource.data.role == resource.data.role
                     && request.resource.data.get('active', true) == resource.data.get('active', true)));
       allow delete: if isAdmin();
+    }
+
+    // Public profiles: a tiny safe mirror of users (uid, name, email) that any
+    // signed-in person can read. It exists so features like the wallet can show
+    // a recipient list without exposing the full private users collection.
+    match /public_profiles/{uid} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == uid
+                            && request.resource.data.uid == uid
+                            && request.resource.data.keys().hasOnly(['uid', 'name', 'email']);
+      allow delete: if isAdmin();
+    }
+
+    // Support requests: filed when a user cannot complete any verification
+    // method (the staff-assisted fallback). Staff can read and resolve them.
+    match /support_requests/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.status == 'open';
+      allow read: if isStaffUp() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow update: if isStaffUp();
     }
 
     match /logs/{id} {
@@ -88,15 +119,21 @@ service cloud.firestore {
       allow read, delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
 
-    // Wallets: owner reads; writes happen through the simulated payment flow.
+    // Wallets: the owner (and staff) can read/write. Any signed-in user may
+    // credit another wallet (the recipient side of a simulated transfer), but
+    // never debit it.
     match /wallets/{uid} {
-      allow read, write: if signedIn() && (request.auth.uid == uid || isStaffUp());
+      allow read: if signedIn() && (request.auth.uid == uid || isStaffUp());
+      allow write: if signedIn() && (request.auth.uid == uid || isStaffUp() || walletCreditOk(uid));
     }
 
-    // Transactions: owner reads; signed-in users create during simulated pay.
+    // Transactions: owner reads; a sender writes both sides of a simulated
+    // transfer (their own debit row and the recipient's credit row), so a row
+    // is allowed when the signed-in user is either the owner or the sender.
     match /transactions/{id} {
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaffUp());
-      allow create: if signedIn();
+      allow create: if signedIn() && (request.resource.data.uid == request.auth.uid
+                    || request.resource.data.get('fromUid', '') == request.auth.uid);
     }
 
     // Check-ins: users create/read their own; staff read all.
@@ -105,9 +142,11 @@ service cloud.firestore {
       allow read: if isStaffUp() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
-    // AI chat history: owner only.
+    // AI chat history: owner only. Reads look at the stored doc (resource),
+    // writes at the incoming doc (request.resource) — mixing them blocks reads.
     match /ai_chats/{id} {
-      allow read, create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
     }
   }
 }

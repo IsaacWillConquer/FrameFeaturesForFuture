@@ -6,10 +6,12 @@ import FormField from "../core/ui/FormField";
 import Button from "../core/ui/Button";
 import Alert from "../core/ui/Alert";
 import AuthShell from "../core/layout/AuthShell";
+import { useI18n } from "../core/i18n/I18nProvider";
 import { secondsLocked, recordFail, clearFails } from "../core/security/loginLimiter";
 
 export default function Login() {
   const { user, verified, loading, refresh } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -75,19 +77,19 @@ export default function Login() {
 
   return (
     <AuthShell
-      title="Log in"
-      subtitle="Welcome back. Sign in to continue."
-      footer={<>No account? <Link to="/register" className="font-medium text-primary underline">Register</Link></>}
+      title={t("login_title", "Welcome back")}
+      subtitle={t("login_subtitle", "Log in to continue.")}
+      footer={<>{t("login_no_account", "No account yet?")} <Link to="/register" className="font-medium text-primary underline">{t("login_register", "Register")}</Link></>}
     >
       <Alert>{error}</Alert>
       <Alert type="info">{info}</Alert>
 
       <form onSubmit={handleLogin}>
-        <FormField id="email" label="Email" type="email" value={email}
+        <FormField id="email" label={t("login_email", "Email")} type="email" value={email}
           onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-        <FormField id="password" label="Password" type="password" value={password}
+        <FormField id="password" label={t("login_password", "Password")} type="password" value={password}
           onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-        <Button type="submit" disabled={busy} className="w-full">{busy ? "Logging in..." : "Log in"}</Button>
+        <Button type="submit" disabled={busy} className="w-full">{busy ? "..." : t("login_submit", "Log in")}</Button>
       </form>
 
       <div className="my-4 flex items-center gap-3 text-xs text-fg-muted">
@@ -95,11 +97,11 @@ export default function Login() {
       </div>
 
       <Button type="button" variant="secondary" onClick={handleGoogle} className="w-full">
-        Continue with Google
+        {t("login_google", "Continue with Google")}
       </Button>
 
       <div className="mt-4 text-center">
-        <button type="button" onClick={handleForgot} className="text-sm text-primary underline min-h-11">Forgot password?</button>
+        <button type="button" onClick={handleForgot} className="text-sm text-primary underline min-h-11">{t("login_forgot", "Forgot password?")}</button>
       </div>
     </AuthShell>
   );

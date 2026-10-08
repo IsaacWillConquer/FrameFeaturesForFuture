@@ -40,15 +40,19 @@ class TotpService {
   static String _hash(String code) =>
       sha256.convert(utf8.encode(code.trim().toLowerCase())).toString();
 
-  // True (and the code is burned) if it matches one of the saved recovery codes
-  static Future<bool> useRecoveryCode(
-      String uid, Map<String, dynamic> totp, String input) async {
+  // True (and the code is burned) if it matches one of the saved recovery codes.
+  // Runs in a transaction so two devices can never burn the same code.
+  static Future<bool> useRecoveryCode(String uid, String input) async {
     final hash = _hash(input);
-    final saved = List<String>.from(totp['recovery'] ?? []);
-    if (!saved.contains(hash)) return false;
-    await _db.collection(AppConfig.totp).doc(uid).update({
-      'recovery': FieldValue.arrayRemove([hash]),
+    final ref = _db.collection(AppConfig.totp).doc(uid);
+    return _db.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      final saved = List<String>.from(snap.data()?['recovery'] ?? []);
+      if (!saved.contains(hash)) return false;
+      tx.update(ref, {
+        'recovery': FieldValue.arrayRemove([hash]),
+      });
+      return true;
     });
-    return true;
   }
 }

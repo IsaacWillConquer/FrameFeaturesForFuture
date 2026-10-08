@@ -30,7 +30,7 @@ Planned, not built yet: topic collections (decided on reveal day, before any top
 
 ## Build order (steps 3 to 6)
 
-| Step | What | Status (Oct 7, 2026) |
+| Step | What | Status (Oct 8, 2026) |
 |---|---|---|
 | 3.1 | Early bare-bones deploy | superseded — full app built first |
 | 3.2 | **User slice**: register, verify, login, 2FA, notifications, accessibility | code done, NOT live-tested (T1–T65) |
@@ -40,9 +40,14 @@ Planned, not built yet: topic collections (decided on reveal day, before any top
 | 5 | Mobile app | scaffolded Oct 7 (`mobile/` created, deps + Android edits applied); remaining: `flutterfire configure` (needs `firebase login`) + on-device run/tests (M1–M13) |
 | 6 | Reveal day: static page skeletons per entity first, then logic, one role at a time | Oct 10 |
 
-## Current snapshot (Oct 7, 2026)
+## Current snapshot (Oct 8, 2026)
 
-- Web v3 fully built (design system, all pages, P1 security, P4 simulated extras). Lint: 0 errors. Build: success.
-- Mobile `mobile/` scaffolded from `mobile-src/lib`; `firebase_options.dart` still needs `flutterfire configure`.
-- Not done: live test pass (docs/AWA-test-guide.md T1–T71), deploy to Hosting, topic modules.
+- Web v3 fully built (design system, all pages, P1 security, P4 simulated extras), plus the Oct 8
+  audit fixes (rules, wallet, fallback chain, PWA service worker, i18n, voice commands) and cleanup.
+  Lint: 0 errors / 0 warnings. Build: success.
+- Mobile `mobile/` scaffolded from `mobile-src/lib` and extended to parity (register, forgot password,
+  lockout, idle logout, prefs, wallet, check-in, announcements); `firebase_options.dart` still needs
+  `flutterfire configure`.
+- Not done: live test pass (docs/AWA-test-guide.md T1–T95), publish rules + deploy to Hosting,
+  topic modules (Oct 10).
 - Full current state + next steps: `docs/HANDOFF.md`.

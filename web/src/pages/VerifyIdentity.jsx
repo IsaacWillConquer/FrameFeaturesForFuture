@@ -12,7 +12,7 @@ import Badge from "../core/ui/Badge";
 // sensitive action (changing payout details, deleting an account, etc.).
 // Whoever passes gets a short-lived confirmation.
 export default function VerifyIdentity() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [verifiedBy, setVerifiedBy] = useState(null);
   const [error, setError] = useState("");
 
@@ -49,7 +49,7 @@ export default function VerifyIdentity() {
           <CardHeader title="Choose a method" />
           <CardBody>
             <Alert>{error}</Alert>
-            <VerificationFallback uid={user.uid} onVerified={handleVerified} />
+            <VerificationFallback uid={user.uid} name={profile?.name || user.email} email={user.email} onVerified={handleVerified} />
           </CardBody>
         </Card>
       )}
