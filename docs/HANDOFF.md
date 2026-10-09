@@ -101,10 +101,32 @@ FinalProject_AWA/
   `getFaceChecks`) and the redundant `modules/.gitkeep`; `.gitignore` covers build output. Docs
   refreshed for the new collections and to drop the stale "toasts"/"PWA-lite"/"26 warnings" claims.
 
+**Oct 9 — mobile emulator test pass:**
+- Got the mobile app **building and running on an Android 15 emulator**. Two real build blockers
+  fixed: Kotlin Gradle plugin `2.1.0` → **`2.3.0`** (`mobile/android/settings.gradle.kts`; the new
+  `firebase_auth` pulls Kotlin 2.3.0 metadata) and `kotlinOptions.jvmTarget` → `compilerOptions {}`
+  (`mobile/android/app/build.gradle.kts`). Also restored a broken `firebase_options.dart` import in
+  `main.dart`. A **local, gitignored** `lib/firebase_options.dart` was generated from `web/.env` to
+  run it; the real one still needs `firebase login` + `flutterfire configure`.
+- Hand-tested on the emulator: launch + Firebase init, login, wrong-password error, login lockout
+  (**persists across a full app restart**), forgot-password, register + change-password validation,
+  Settings (large text + dark mode apply instantly), Home name/role, QR typed fallback, logout +
+  theme reset. All pass.
+- **Findings:** Wallet/Check-in/Announcements first failed with `cloud_firestore/permission-denied`
+  — root cause was **not code**: the deployed rules were still the old "starting point" (`9c23030`).
+  After **publishing `web/firestore.rules`**, re-tested: wallet auto-created (500) and top-up worked
+  (500 → 600), check-in recorded, announcements load. All green. (User-to-user transfer still needs a
+  2nd account.)
+- Not testable on the emulator: M1/M3/M4/M5 (need a real account + biometrics), M7/M8/M11 (need the
+  web side), camera scan (needs a physical device). A benign Android "16 KB page-size" dialog shows
+  on first launch (API 36 emulator; prebuilt `.so`s aren't 16 KB aligned).
+
 **NOT done (in order):**
-1. Commit the working copy (web + mobile + docs).
-2. `firebase login` + `flutterfire configure` in `mobile/` (generates `firebase_options.dart`).
-3. Publish the updated `web/firestore.rules`, then run the live test pass (T1–T95 + M1–M13) and deploy.
+1. Commit the working copy (web + mobile + docs + the Android Kotlin build fix).
+2. `firebase login` + `flutterfire configure` in `mobile/` to replace the local throwaway
+   `firebase_options.dart`.
+3. Run the live web test pass (T1–T95 + the remaining M tests) and deploy. (`web/firestore.rules`
+   is now published — mobile wallet/check-in/announcements verified working Oct 9.)
 4. Reveal day (Oct 10): fill feature map, create `modules/<entity>/` per topic entity.
 5. Mobile-only gaps + skipped features (see TODO.md §6).
 
@@ -191,8 +213,10 @@ load/login. Full plain-language explanations: `docs/AWA-security-explained.md`.
 
 ## 10. Testing
 
-- Web tests: `docs/AWA-test-guide.md` (T1–T95 web, M1–M13 mobile). **None have been run yet** — that's the
-  biggest open item before reveal day. T86–T95 cover the Oct 7 features. Part E has the bug-report template.
+- Web tests: `docs/AWA-test-guide.md` (T1–T95 web, M1–M13 mobile). **None have been run live yet** —
+  the biggest open item before reveal day. T86–T95 cover the Oct 7 features. Part E has the bug-report
+  template. **Mobile was partially hand-tested on an emulator Oct 9** (see §4): startup/auth/settings/
+  QR/lockout/logout pass, and Wallet/Check-in/Announcements pass after publishing the rules.
 - Lint: `npm run lint` → **0 errors, 0 warnings** (Oct 8: all 26 fixed — render-phase adjustments
   instead of set-state-in-effect, `'` entities, `alive` flags on async effects, extracted
   fetch helpers for purity).
@@ -213,8 +237,15 @@ load/login. Full plain-language explanations: `docs/AWA-security-explained.md`.
 7. Windows + Flutter: `flutter pub add` prints a symlink warning — enable Developer Mode
    (`start ms-settings:developers`) before building plugins. Doesn't block `pub add`.
 8. local_auth needs: `minSdk = 23`, `USE_BIOMETRIC` permission, `FlutterFragmentActivity` (all applied Oct 7).
-9. Mobile login lockout / idle logout / register / forgot-password are web-only for now (see mobile README).
+9. Mobile **has** register, persisted login lockout, idle logout (all screens) and forgot-password
+   (verified on the emulator Oct 9). Still mobile-only gaps: Google sign-in, WebAuthn/face, 2FA
+   enable/disable, profile edit, admin screens, TTS.
 10. Firebase CLI on this machine is installed but **not logged in**; `flutterfire` CLI is installed globally.
+11. **Mobile won't build on the old Kotlin plugin.** `firebase_auth` (6.7.0) pulls Kotlin 2.3.0
+    metadata, so `mobile/android/settings.gradle.kts` must use `org.jetbrains.kotlin.android` **2.3.0**
+    (not 2.1.0), and the app module must use the `kotlin { compilerOptions { jvmTarget = … } }` DSL
+    (the old `kotlinOptions { jvmTarget = "11" }` is an error on Kotlin 2.3). Verify with
+    `flutter build apk --debug` then `flutter run`.
 
 ## 12. Next steps (prioritized)
 
