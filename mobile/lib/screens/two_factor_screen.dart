@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../core/auth_service.dart';
 import '../core/totp_service.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 
 // Asks for the 6-digit authenticator code (or a one-time recovery code)
 class TwoFactorScreen extends StatefulWidget {
@@ -65,30 +67,40 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Two-factor check')),
+      appBar: AppBar(backgroundColor: Colors.transparent),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: CenteredScroll(
           children: [
-            Text(_recovery
-                ? 'Enter one of your recovery codes. Each one works only once.'
-                : 'Open your authenticator app and enter the 6-digit code for ${AppConfig.appName}.'),
-            const SizedBox(height: 16),
+            AwaIntro(
+              icon: Icons.verified_user_outlined,
+              title: _recovery ? 'Use a recovery code' : 'Two-factor check',
+              subtitle: _recovery
+                  ? 'Enter one of your recovery codes. Each one works only once.'
+                  : 'Open your authenticator app and enter the 6-digit code for ${AppConfig.appName}.',
+            ),
+            const SizedBox(height: AwaTheme.gapXl),
             TextField(
               controller: _code,
               keyboardType: _recovery ? TextInputType.text : TextInputType.number,
               autofillHints: const [AutofillHints.oneTimeCode],
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, letterSpacing: 6),
               decoration: InputDecoration(
                 labelText: _recovery ? 'Recovery code' : '6-digit code',
-                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.password),
               ),
               onSubmitted: (_) => _submit(),
             ),
-            const SizedBox(height: 16),
+            if (_error.isNotEmpty) ...[
+              const SizedBox(height: AwaTheme.gapM),
+              InlineMessage(text: _error, isError: true),
+            ],
+            const SizedBox(height: AwaTheme.gapL),
             FilledButton(
               onPressed: _busy ? null : _submit,
               child: Text(_busy ? 'Checking...' : 'Continue'),
             ),
+            const SizedBox(height: AwaTheme.gapXs),
             TextButton(
               onPressed: () => setState(() {
                 _recovery = !_recovery;
@@ -100,7 +112,6 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                   : 'Lost your phone? Use a recovery code'),
             ),
             TextButton(onPressed: AuthService.signOut, child: const Text('Log out')),
-            if (_error.isNotEmpty) Semantics(liveRegion: true, child: Text(_error)),
           ],
         ),
       ),

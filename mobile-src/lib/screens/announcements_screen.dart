@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../core/auth_service.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 
 // Read announcements; staff and admin can also post.
 class AnnouncementsScreen extends StatefulWidget {
@@ -69,41 +71,58 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       appBar: AppBar(title: const Text('Announcements')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             if (_canPost) ...[
-              Text('Post an announcement', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _title,
-                decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+              const AwaSectionTitle(kicker: 'Staff', title: 'Post an announcement'),
+              const SizedBox(height: AwaTheme.gapM),
+              AwaCard(
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _title,
+                      decoration: const InputDecoration(
+                        labelText: 'Title',
+                        prefixIcon: Icon(Icons.title),
+                      ),
+                    ),
+                    const SizedBox(height: AwaTheme.gapM),
+                    TextField(
+                      controller: _body,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Message',
+                        alignLabelWithHint: true,
+                      ),
+                    ),
+                    if (_error.isNotEmpty) ...[
+                      const SizedBox(height: AwaTheme.gapM),
+                      InlineMessage(text: _error, isError: true),
+                    ],
+                    const SizedBox(height: AwaTheme.gapM),
+                    FilledButton.icon(
+                      onPressed: _busy ? null : _post,
+                      icon: const Icon(Icons.send),
+                      label: Text(_busy ? 'Posting...' : 'Post'),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _body,
-                minLines: 2,
-                maxLines: 4,
-                decoration: const InputDecoration(labelText: 'Message', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 8),
-              if (_error.isNotEmpty)
-                Semantics(liveRegion: true, child: Text(_error, style: TextStyle(color: Theme.of(context).colorScheme.error))),
-              FilledButton(
-                onPressed: _busy ? null : _post,
-                child: Text(_busy ? 'Posting...' : 'Post'),
-              ),
-              const Divider(height: 32),
+              const SizedBox(height: AwaTheme.gapXl),
             ],
-            Text('Recent', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            const AwaSectionTitle(kicker: 'Feed', title: 'Recent'),
+            const SizedBox(height: AwaTheme.gapM),
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: stream,
               builder: (context, snap) {
-                if (snap.hasError) return const Text('Could not load announcements.');
+                if (snap.hasError) {
+                  return const InlineMessage(text: 'Could not load announcements.', isError: true);
+                }
                 if (!snap.hasData) {
                   return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),
+                    padding: EdgeInsets.all(AwaTheme.gapL),
+                    child: Center(child: CircularProgressIndicator()),
                   );
                 }
                 final docs = snap.data!.docs.toList()
@@ -112,14 +131,62 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     final tb = (b.data()['createdAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0;
                     return tb.compareTo(ta);
                   });
-                if (docs.isEmpty) return const Text('No announcements yet.');
+                if (docs.isEmpty) {
+                  return const AwaCard(
+                    child: EmptyState(
+                      icon: Icons.campaign_outlined,
+                      title: 'No announcements yet',
+                      message: 'Updates from staff will appear here.',
+                    ),
+                  );
+                }
                 return Column(
                   children: docs.map((d) {
                     final a = d.data();
-                    return Card(
-                      child: ListTile(
-                        title: Text('${a['title'] ?? ''}'),
-                        subtitle: Text('${a['body'] ?? ''}'),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AwaTheme.gapS),
+                      child: AwaCard(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.campaign,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: AwaTheme.gapM),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${a['title'] ?? ''}',
+                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                  if ('${a['body'] ?? ''}'.isNotEmpty) ...[
+                                    const SizedBox(height: AwaTheme.gapXs),
+                                    Text(
+                                      '${a['body'] ?? ''}',
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }).toList(),

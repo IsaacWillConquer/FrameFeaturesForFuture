@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../core/auth_service.dart';
 import '../core/login_limiter.dart';
 import '../core/password_field.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -82,46 +84,53 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Log in')),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: CenteredScroll(
           children: [
+            const AwaIntro(
+              showLogo: true,
+              title: 'Welcome back',
+              subtitle: 'Log in to check in, pay, and stay up to date.',
+            ),
+            const SizedBox(height: AwaTheme.gapXl),
             TextField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
               autofillHints: const [AutofillHints.email],
-              decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.mail_outline),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AwaTheme.gapM),
             PasswordField(
               controller: _password,
               label: 'Password',
               autofillHints: const [AutofillHints.password],
               onSubmitted: (_) => _submit(),
             ),
-            const SizedBox(height: 16),
-            if (_error.isNotEmpty)
-              // liveRegion makes TalkBack read the error as soon as it appears
-              Semantics(
-                liveRegion: true,
-                child: Text(_error, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-              ),
-            const SizedBox(height: 16),
+            if (_error.isNotEmpty) ...[
+              const SizedBox(height: AwaTheme.gapM),
+              InlineMessage(text: _error, isError: true),
+            ],
+            const SizedBox(height: AwaTheme.gapL),
             FilledButton(
               onPressed: _busy ? null : _submit,
               child: Text(_busy ? 'Logging in...' : 'Log in'),
             ),
+            const SizedBox(height: AwaTheme.gapXs),
             TextButton(
               onPressed: _busy ? null : _forgotPassword,
               child: const Text('Forgot password?'),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AwaTheme.gapM),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('No account yet?'),
+                Text('No account yet?', style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
                 TextButton(
                   onPressed: _busy
                       ? null

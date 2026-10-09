@@ -5,6 +5,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../config/app_config.dart';
 import '../core/auth_service.dart';
 import '../core/payment_qr.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 import 'scan_screen.dart';
 
 // Simulated wallet: balance, top-up, transfer, ledger, QR pay/receive.
@@ -209,134 +211,225 @@ class _WalletScreenState extends State<WalletScreen> {
       appBar: AppBar(title: const Text('Wallet')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: walletStream,
               builder: (context, snap) {
                 final balance = (snap.data?.data()?['balance'] as num?) ?? 0;
-                return Card(
-                  child: ListTile(
-                    title: const Text('Balance (demo credits)'),
-                    trailing: Text(
-                      '$balance',
-                      style: Theme.of(context).textTheme.headlineSmall,
+                return _BalanceHero(balance: balance);
+              },
+            ),
+            if (_error.isNotEmpty) ...[
+              const SizedBox(height: AwaTheme.gapM),
+              InlineMessage(text: _error, isError: true),
+            ],
+            if (_message.isNotEmpty) ...[
+              const SizedBox(height: AwaTheme.gapM),
+              InlineMessage(text: _message),
+            ],
+            const SizedBox(height: AwaTheme.gapXl),
+            const AwaSectionTitle(kicker: 'Transfer', title: 'Send payment'),
+            const SizedBox(height: AwaTheme.gapM),
+            AwaCard(
+              child: Column(
+                children: [
+                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: peopleStream,
+                    builder: (context, snap) {
+                      final docs = (snap.data?.docs ?? [])
+                          .where((d) => d.id != widget.uid)
+                          .toList();
+                      // If a recipient was prefilled (e.g. from a scanned code)
+                      // before the profile list loaded, include a placeholder so
+                      // the dropdown's value always matches an item.
+                      final hasSelected = _toUid != null && docs.any((d) => d.id == _toUid);
+                      final items = <DropdownMenuItem<String>>[
+                        ...docs.map((d) => DropdownMenuItem(
+                              value: d.id,
+                              child: Text(
+                                (d.data()['name'] as String?)?.isNotEmpty == true
+                                    ? d.data()['name'] as String
+                                    : (d.data()['email'] as String? ?? d.id),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            )),
+                        if (_toUid != null && !hasSelected)
+                          DropdownMenuItem(value: _toUid, child: Text(_toUid!)),
+                      ];
+                      return DropdownButtonFormField<String>(
+                        initialValue: _toUid,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Recipient',
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                        hint: const Text('Choose someone'),
+                        items: items,
+                        onChanged: (v) => setState(() => _toUid = v),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AwaTheme.gapM),
+                  TextField(
+                    controller: _amount,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'Amount',
+                      prefixIcon: Icon(Icons.attach_money),
                     ),
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            if (_error.isNotEmpty)
-              Semantics(liveRegion: true, child: Text(_error, style: TextStyle(color: Theme.of(context).colorScheme.error))),
-            if (_message.isNotEmpty)
-              Text(_message, style: const TextStyle(color: Colors.green)),
-            const SizedBox(height: 16),
-            Text('Send payment', style: Theme.of(context).textTheme.titleMedium),
-            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: peopleStream,
-              builder: (context, snap) {
-                final docs = (snap.data?.docs ?? [])
-                    .where((d) => d.id != widget.uid)
-                    .toList();
-                // If a recipient was prefilled (e.g. from a scanned code) before
-                // the profile list loaded, include a placeholder so the dropdown's
-                // value always matches an item.
-                final hasSelected = _toUid != null && docs.any((d) => d.id == _toUid);
-                final items = <DropdownMenuItem<String>>[
-                  ...docs.map((d) => DropdownMenuItem(
-                        value: d.id,
-                        child: Text(
-                          (d.data()['name'] as String?)?.isNotEmpty == true
-                              ? d.data()['name'] as String
-                              : (d.data()['email'] as String? ?? d.id),
+                  const SizedBox(height: AwaTheme.gapM),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: _busy ? null : _send,
+                          child: const Text('Send'),
                         ),
-                      )),
-                  if (_toUid != null && !hasSelected)
-                    DropdownMenuItem(value: _toUid, child: Text(_toUid!)),
-                ];
-                return DropdownButtonFormField<String>(
-                  initialValue: _toUid,
-                  decoration: const InputDecoration(
-                    labelText: 'Recipient',
-                    border: OutlineInputBorder(),
+                      ),
+                      const SizedBox(width: AwaTheme.gapS),
+                      OutlinedButton.icon(
+                        onPressed: _busy ? null : _scanToPay,
+                        icon: const Icon(Icons.qr_code_scanner),
+                        label: const Text('Scan'),
+                      ),
+                    ],
                   ),
-                  items: items,
-                  onChanged: (v) => setState(() => _toUid = v),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _amount,
-              keyboardType: TextInputType.number,
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(labelText: 'Amount', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton(
-                    onPressed: _busy ? null : _send,
-                    child: const Text('Send'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: _busy ? null : _scanToPay,
-                  icon: const Icon(Icons.qr_code_scanner),
-                  label: const Text('Scan'),
-                ),
-              ],
-            ),
-            if (canShowQr) ...[
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: () => setState(() => _showQr = !_showQr),
-                icon: const Icon(Icons.qr_code),
-                label: Text(_showQr ? 'Hide payment QR' : 'Show payment QR'),
-              ),
-              if (_showQr)
-                Center(
-                  child: QrImageView(
-                    data: encodePaymentQR(toUid: _toUid!, amount: value),
-                    size: 200,
-                    backgroundColor: Colors.white,
-                  ),
-                ),
-            ],
-            const Divider(height: 32),
-            Text('Add demo credits', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _topUpAmount,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Amount', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: _busy ? null : _topUp,
-              child: const Text('Top up'),
-            ),
-            const Divider(height: 32),
-            Text('My receive code', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            const Text('Show this to someone so they can pay you (simulated).'),
-            const SizedBox(height: 8),
-            Center(
-              child: QrImageView(
-                data: encodeProfileQR(uid: widget.uid, name: widget.name),
-                size: 200,
-                backgroundColor: Colors.white,
+                  if (canShowQr) ...[
+                    const SizedBox(height: AwaTheme.gapS),
+                    TextButton.icon(
+                      onPressed: () => setState(() => _showQr = !_showQr),
+                      icon: const Icon(Icons.qr_code),
+                      label: Text(_showQr ? 'Hide payment QR' : 'Show payment QR'),
+                    ),
+                    if (_showQr)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AwaTheme.gapS),
+                        child: _QrBlock(
+                          data: encodePaymentQR(toUid: _toUid!, amount: value),
+                        ),
+                      ),
+                  ],
+                ],
               ),
             ),
-            const Divider(height: 32),
-            Text('Recent transactions', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            const SizedBox(height: AwaTheme.gapXl),
+            const AwaSectionTitle(kicker: 'Demo', title: 'Add demo credits'),
+            const SizedBox(height: AwaTheme.gapM),
+            AwaCard(
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _topUpAmount,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Amount',
+                      prefixIcon: Icon(Icons.add_card),
+                    ),
+                  ),
+                  const SizedBox(height: AwaTheme.gapM),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _topUp,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Top up'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AwaTheme.gapXl),
+            const AwaSectionTitle(kicker: 'Get paid', title: 'My receive code'),
+            const SizedBox(height: AwaTheme.gapM),
+            AwaCard(
+              child: Column(
+                children: [
+                  Text(
+                    'Show this to someone so they can pay you (simulated).',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: AwaTheme.gapM),
+                  _QrBlock(data: encodeProfileQR(uid: widget.uid, name: widget.name)),
+                ],
+              ),
+            ),
+            const SizedBox(height: AwaTheme.gapXl),
+            const AwaSectionTitle(kicker: 'History', title: 'Recent transactions'),
+            const SizedBox(height: AwaTheme.gapM),
             _Transactions(uid: widget.uid),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BalanceHero extends StatelessWidget {
+  final num balance;
+  const _BalanceHero({required this.balance});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AwaTheme.gapL),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [scheme.primary, scheme.primary.withValues(alpha: 0.80)],
+        ),
+        borderRadius: BorderRadius.circular(AwaTheme.radius),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.account_balance_wallet, size: 18, color: scheme.onPrimary.withValues(alpha: 0.9)),
+              const SizedBox(width: AwaTheme.gapS),
+              Text(
+                'Balance (demo credits)',
+                style: text.labelLarge?.copyWith(color: scheme.onPrimary.withValues(alpha: 0.9)),
+              ),
+            ],
+          ),
+          const SizedBox(height: AwaTheme.gapM),
+          Text(
+            '$balance',
+            style: text.displaySmall?.copyWith(
+              color: scheme.onPrimary,
+              fontWeight: FontWeight.w800,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QrBlock extends StatelessWidget {
+  final String data;
+  const _QrBlock({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AwaTheme.gapM),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AwaTheme.radiusSm),
+      ),
+      child: QrImageView(
+        data: data,
+        size: 200,
+        backgroundColor: Colors.white,
       ),
     );
   }
@@ -355,11 +448,13 @@ class _Transactions extends StatelessWidget {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: stream,
       builder: (context, snap) {
-        if (snap.hasError) return const Text('Could not load transactions.');
+        if (snap.hasError) {
+          return const InlineMessage(text: 'Could not load transactions.', isError: true);
+        }
         if (!snap.hasData) {
           return const Padding(
-            padding: EdgeInsets.all(16),
-            child: CircularProgressIndicator(),
+            padding: EdgeInsets.all(AwaTheme.gapL),
+            child: Center(child: CircularProgressIndicator()),
           );
         }
         final docs = snap.data!.docs.toList()
@@ -368,20 +463,84 @@ class _Transactions extends StatelessWidget {
             final tb = (b.data()['createdAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0;
             return tb.compareTo(ta);
           });
-        if (docs.isEmpty) return const Text('No transactions yet.');
+        if (docs.isEmpty) {
+          return const AwaCard(
+            child: EmptyState(
+              icon: Icons.receipt_long_outlined,
+              title: 'No transactions yet',
+              message: 'Top up or send a payment to get started.',
+            ),
+          );
+        }
         return Column(
-          children: docs.take(20).map((d) {
-            final t = d.data();
-            final outgoing = t['type'] == 'payment_sent';
-            return ListTile(
-              leading: Icon(outgoing ? Icons.arrow_upward : Icons.arrow_downward),
-              title: Text('${t['type'] ?? ''}'.replaceAll('_', ' ')),
-              subtitle: Text('${t['note'] ?? ''}'),
-              trailing: Text('${outgoing ? '-' : '+'}${t['amount'] ?? ''}'),
-            );
-          }).toList(),
+          children: docs.take(20).map((d) => _TransactionRow(data: d.data())).toList(),
         );
       },
+    );
+  }
+}
+
+class _TransactionRow extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _TransactionRow({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final outgoing = data['type'] == 'payment_sent';
+    final incoming = data['type'] == 'payment_received';
+    final accent = incoming ? const Color(0xFF12805C) : scheme.onSurfaceVariant;
+    final title = '${data['type'] ?? ''}'.replaceAll('_', ' ');
+    final note = '${data['note'] ?? ''}';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AwaTheme.gapS),
+      child: AwaCard(
+        padding: const EdgeInsets.symmetric(horizontal: AwaTheme.gapM, vertical: AwaTheme.gapS + AwaTheme.gapXs),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                outgoing
+                    ? Icons.arrow_upward
+                    : incoming
+                        ? Icons.arrow_downward
+                        : Icons.add,
+                size: 20,
+                color: accent,
+              ),
+            ),
+            const SizedBox(width: AwaTheme.gapM),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: text.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  if (note.isNotEmpty)
+                    Text(
+                      note,
+                      style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                ],
+              ),
+            ),
+            Text(
+              '${outgoing ? '-' : '+'}${data['amount'] ?? ''}',
+              style: text.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: outgoing ? scheme.onSurface : const Color(0xFF12805C),
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../core/auth_service.dart';
 import '../core/password_field.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -53,44 +55,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
+      appBar: AppBar(backgroundColor: Colors.transparent),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: CenteredScroll(
           children: [
+            const AwaIntro(
+              icon: Icons.person_add_alt_1,
+              title: 'Create your account',
+              subtitle: 'It only takes a minute.',
+            ),
+            const SizedBox(height: AwaTheme.gapXl),
             TextField(
               controller: _name,
               autofillHints: const [AutofillHints.name],
-              decoration: const InputDecoration(labelText: 'Full name', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Full name',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AwaTheme.gapM),
             TextField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
               autofillHints: const [AutofillHints.email],
-              decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.mail_outline),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AwaTheme.gapM),
             PasswordField(
               controller: _password,
               label: 'Password',
               helperText: 'At least 8 characters.',
               autofillHints: const [AutofillHints.newPassword],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AwaTheme.gapM),
             PasswordField(
               controller: _confirm,
               label: 'Confirm password',
               autofillHints: const [AutofillHints.newPassword],
               onSubmitted: (_) => _submit(),
             ),
-            const SizedBox(height: 16),
-            if (_error.isNotEmpty)
-              Semantics(
-                liveRegion: true,
-                child: Text(_error, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-              ),
-            const SizedBox(height: 16),
+            if (_error.isNotEmpty) ...[
+              const SizedBox(height: AwaTheme.gapM),
+              InlineMessage(text: _error, isError: true),
+            ],
+            const SizedBox(height: AwaTheme.gapL),
             FilledButton(
               onPressed: _busy ? null : _submit,
               child: Text(_busy ? 'Creating...' : 'Register'),

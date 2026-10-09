@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../core/app_prefs.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 
 // Text size + display options. Saved on the account, so the web app shows the same settings.
 class SettingsScreen extends StatefulWidget {
@@ -45,59 +47,97 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
-            Text('Text size', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'normal', label: Text('Normal')),
-                ButtonSegment(value: 'large', label: Text('Large')),
-                ButtonSegment(value: 'xlarge', label: Text('Extra large')),
-              ],
-              selected: {_size},
-              onSelectionChanged: (s) {
-                setState(() => _size = s.first);
-                _save('textSize', s.first);
-              },
+            const AwaSectionTitle(kicker: 'Display', title: 'Reading comfort'),
+            const SizedBox(height: AwaTheme.gapM),
+            AwaCard(
+              padding: const EdgeInsets.all(AwaTheme.gapM),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Text size', style: text.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: AwaTheme.gapS),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<String>(
+                      showSelectedIcon: false,
+                      segments: const [
+                        ButtonSegment(value: 'normal', label: Text('Normal')),
+                        ButtonSegment(value: 'large', label: Text('Large')),
+                        ButtonSegment(value: 'xlarge', label: Text('Extra large')),
+                      ],
+                      selected: {_size},
+                      onSelectionChanged: (s) {
+                        setState(() => _size = s.first);
+                        _save('textSize', s.first);
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Dark mode'),
-              value: _dark,
-              onChanged: (v) {
-                setState(() => _dark = v);
-                _save('dark', v);
-              },
+            const SizedBox(height: AwaTheme.gapM),
+            AwaCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.dark_mode_outlined),
+                    title: const Text('Dark mode'),
+                    value: _dark,
+                    onChanged: (v) {
+                      setState(() => _dark = v);
+                      _save('dark', v);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.contrast),
+                    title: const Text('High contrast'),
+                    subtitle: const Text('Stronger borders and darker text.'),
+                    value: _contrast,
+                    onChanged: (v) {
+                      setState(() => _contrast = v);
+                      _save('contrast', v);
+                    },
+                  ),
+                ],
+              ),
             ),
-            SwitchListTile(
-              title: const Text('High contrast'),
-              subtitle: const Text('Stronger borders and darker text.'),
-              value: _contrast,
-              onChanged: (v) {
-                setState(() => _contrast = v);
-                _save('contrast', v);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('Reduce motion'),
-              value: _reduceMotion,
-              onChanged: (v) {
-                setState(() => _reduceMotion = v);
-                _save('reduceMotion', v);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('Dyslexia-friendly spacing'),
-              value: _dyslexia,
-              onChanged: (v) {
-                setState(() => _dyslexia = v);
-                _save('dyslexia', v);
-              },
+            const SizedBox(height: AwaTheme.gapXl),
+            const AwaSectionTitle(kicker: 'Motion', title: 'Movement & text'),
+            const SizedBox(height: AwaTheme.gapM),
+            AwaCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.animation),
+                    title: const Text('Reduce motion'),
+                    value: _reduceMotion,
+                    onChanged: (v) {
+                      setState(() => _reduceMotion = v);
+                      _save('reduceMotion', v);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.text_fields),
+                    title: const Text('Dyslexia-friendly spacing'),
+                    value: _dyslexia,
+                    onChanged: (v) {
+                      setState(() => _dyslexia = v);
+                      _save('dyslexia', v);
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),

@@ -7,6 +7,18 @@ check-in and announcements initially failed on stale deployed rules, but **pass 
 `web/firestore.rules` is published**. Nothing is deployed to Hosting yet. Full context:
 `docs/HANDOFF.md`.
 
+## Mobile UI refresh (Oct 9)
+- New design system under `mobile-src/lib/ui/`: `awa_theme.dart` (brand theme — one blue seed
+  `#1D4ED8`, matching the web; globally rounded inputs/cards/buttons) + `awa_widgets.dart`
+  (`AwaCard`, `AwaSectionTitle`, `EmptyState`, `InlineMessage`, `AvatarChip`, `AwaLogoMark`,
+  `AwaIntro`, `CenteredScroll`).
+- All 15 screens restyled: branded login/register; home with avatar + role pill + quick-action grid
+  + notification empty state; wallet balance hero + carded send/QR/transactions; check-in &
+  announcements cards with empty states; grouped settings; scan. **Logic untouched** — only the
+  presentation layer changed.
+- Accessibility preserved: text size, dark, high contrast, dyslexia spacing, reduce motion all still
+  apply (verified on the emulator). `flutter analyze` clean; `flutter build apk --debug` succeeds.
+
 ## Mobile emulator test pass (Oct 9) — findings
 - **Passed:** app launches + Firebase init; login screen; wrong-password error; login lockout
   (5 tries) **persists across a full app restart**; forgot-password; register validation;

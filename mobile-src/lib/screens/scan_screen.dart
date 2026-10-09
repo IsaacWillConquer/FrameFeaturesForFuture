@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
+
 // Camera scan with a type-the-code fallback (camera must never be the only way).
 // When payMode is true the screen returns the scanned value to the caller
 // (used by the wallet's scan-to-pay); otherwise it just displays it.
@@ -39,62 +42,73 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(widget.payMode ? 'Scan a payment code' : 'Scan QR code')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             if (widget.payMode)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: Text('Point the camera at an AWA payment or profile code.'),
+              Padding(
+                padding: const EdgeInsets.only(bottom: AwaTheme.gapM),
+                child: Text(
+                  'Point the camera at an AWA payment or profile code.',
+                  style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                ),
               ),
             if (_cameraOn)
-              SizedBox(
-                height: 320,
-                child: MobileScanner(
-                  onDetect: (capture) {
-                    for (final b in capture.barcodes) {
-                      final v = b.rawValue;
-                      if (v != null && v.isNotEmpty) {
-                        _got(v, fromCamera: true);
-                        break;
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AwaTheme.radius),
+                child: SizedBox(
+                  height: 320,
+                  child: MobileScanner(
+                    onDetect: (capture) {
+                      for (final b in capture.barcodes) {
+                        final v = b.rawValue;
+                        if (v != null && v.isNotEmpty) {
+                          _got(v, fromCamera: true);
+                          break;
+                        }
                       }
-                    }
-                  },
-                  errorBuilder: (context, error, child) =>
-                      const Center(child: Text('Camera unavailable. Type the code below.')),
+                    },
+                    errorBuilder: (context, error, child) =>
+                        const Center(child: Text('Camera unavailable. Type the code below.')),
+                  ),
                 ),
               )
             else
-              FilledButton(
+              FilledButton.icon(
                 onPressed: () => setState(() {
                   _result = null;
                   _cameraOn = true;
                 }),
-                child: const Text('Scan with camera'),
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('Scan with camera'),
               ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AwaTheme.gapXl),
+            const AwaSectionTitle(kicker: 'No camera?', title: 'Type the code'),
+            const SizedBox(height: AwaTheme.gapM),
             TextField(
               controller: _typed,
-              decoration: const InputDecoration(labelText: 'Or type the code', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Or type the code',
+                prefixIcon: Icon(Icons.keyboard),
+              ),
             ),
-            const SizedBox(height: 8),
-            OutlinedButton(
+            const SizedBox(height: AwaTheme.gapM),
+            OutlinedButton.icon(
               onPressed: () {
                 if (_typed.text.trim().isNotEmpty) _got(_typed.text.trim());
               },
-              child: const Text('Use this code'),
+              icon: const Icon(Icons.check),
+              label: const Text('Use this code'),
             ),
-            if (_result != null)
-              Semantics(
-                liveRegion: true,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text('Scanned: $_result'),
-                ),
-              ),
+            if (_result != null) ...[
+              const SizedBox(height: AwaTheme.gapM),
+              InlineMessage(text: 'Scanned: $_result'),
+            ],
           ],
         ),
       ),

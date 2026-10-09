@@ -120,6 +120,12 @@ FinalProject_AWA/
 - Not testable on the emulator: M1/M3/M4/M5 (need a real account + biometrics), M7/M8/M11 (need the
   web side), camera scan (needs a physical device). A benign Android "16 KB page-size" dialog shows
   on first launch (API 36 emulator; prebuilt `.so`s aren't 16 KB aligned).
+- **Mobile UI refresh (Oct 9):** added `mobile-src/lib/ui/` — `awa_theme.dart` (brand theme, one blue
+  seed `#1D4ED8` matching the web, global rounded inputs/cards/buttons) and `awa_widgets.dart`
+  (`AwaCard`, `AwaSectionTitle`, `EmptyState`, `InlineMessage`, `AvatarChip`, `AwaLogoMark`, `AwaIntro`,
+  `CenteredScroll`). All 15 screens restyled (logic unchanged); `main.dart` now builds the theme via
+  `AwaTheme.build`. `flutter analyze` clean, debug APK builds, and login/register/home/wallet/check-in/
+  settings verified on the emulator — including dark, high-contrast, large-text and dyslexia modes.
 
 **NOT done (in order):**
 1. Commit the working copy (web + mobile + docs + the Android Kotlin build fix).

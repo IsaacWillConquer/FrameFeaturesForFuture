@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../core/auth_service.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 
 class DeactivatedScreen extends StatelessWidget {
   const DeactivatedScreen({super.key});
@@ -8,13 +10,16 @@ class DeactivatedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Account deactivated')),
+      appBar: AppBar(backgroundColor: Colors.transparent),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: CenteredScroll(
           children: [
-            const Text('An administrator turned off this account. Contact them if this is a mistake.'),
-            const SizedBox(height: 16),
+            const AwaIntro(
+              icon: Icons.block,
+              title: 'Account deactivated',
+              subtitle: 'An administrator turned off this account. Contact them if this is a mistake.',
+            ),
+            const SizedBox(height: AwaTheme.gapXl),
             FilledButton(onPressed: AuthService.signOut, child: const Text('Log out')),
           ],
         ),

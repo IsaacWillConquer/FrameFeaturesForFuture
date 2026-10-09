@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../core/app_prefs.dart';
 import '../core/auth_service.dart';
 import '../core/totp_service.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 import 'change_password_screen.dart';
 import 'deactivated_screen.dart';
 import 'home_screen.dart';
@@ -54,7 +56,22 @@ class _AuthGateState extends State<AuthGate> {
     return _statusFuture!;
   }
 
-  Widget _loading() => const Scaffold(body: Center(child: CircularProgressIndicator()));
+  Widget _loading() => const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AwaLogoMark(size: 64),
+              SizedBox(height: AwaTheme.gapL),
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 3),
+              ),
+            ],
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -84,17 +101,21 @@ class _AuthGateState extends State<AuthGate> {
             // Could not load (offline or rules): don't let anyone past 2FA by accident
             if (status.hasError) {
               return Scaffold(
-                appBar: AppBar(title: const Text('Could not load your account')),
+                appBar: AppBar(backgroundColor: Colors.transparent),
                 body: SafeArea(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
+                  child: CenteredScroll(
                     children: [
-                      const Text('Check your internet connection and try again. If it keeps failing, ask an admin to check the database rules.'),
-                      const SizedBox(height: 16),
+                      const AwaIntro(
+                        icon: Icons.cloud_off,
+                        title: 'Could not load your account',
+                        subtitle: 'Check your internet connection and try again. If it keeps failing, ask an admin to check the database rules.',
+                      ),
+                      const SizedBox(height: AwaTheme.gapXl),
                       FilledButton(
                         onPressed: () => setState(() => _statusFuture = null),
                         child: const Text('Try again'),
                       ),
+                      const SizedBox(height: AwaTheme.gapS),
                       TextButton(onPressed: AuthService.signOut, child: const Text('Log out')),
                     ],
                   ),

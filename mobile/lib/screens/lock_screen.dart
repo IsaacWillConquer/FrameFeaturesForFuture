@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../core/auth_service.dart';
 import '../core/biometric_service.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 
 // Shown after login on each app start. Fingerprint/face, with the phone's own PIN as fallback.
 class LockScreen extends StatefulWidget {
@@ -42,17 +44,24 @@ class _LockScreenState extends State<LockScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('${AppConfig.appName} is locked')),
+      appBar: AppBar(backgroundColor: Colors.transparent),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: CenteredScroll(
           children: [
-            const Text('Use your fingerprint, face, or phone PIN to continue.'),
-            const SizedBox(height: 16),
+            AwaIntro(
+              icon: Icons.fingerprint,
+              title: '${AppConfig.appName} is locked',
+              subtitle: 'Use your fingerprint, face, or phone PIN to continue.',
+            ),
+            const SizedBox(height: AwaTheme.gapXl),
             FilledButton(onPressed: _try, child: const Text('Unlock')),
+            const SizedBox(height: AwaTheme.gapS),
             // Fallback: password login is always possible
             TextButton(onPressed: AuthService.signOut, child: const Text('Log out and use password')),
-            if (_message.isNotEmpty) Semantics(liveRegion: true, child: Text(_message)),
+            if (_message.isNotEmpty) ...[
+              const SizedBox(height: AwaTheme.gapM),
+              InlineMessage(text: _message, isError: true),
+            ],
           ],
         ),
       ),

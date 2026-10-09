@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../core/auth_service.dart';
 import '../core/password_field.dart';
+import '../ui/awa_theme.dart';
+import '../ui/awa_widgets.dart';
 
 // Used for the forced first-login change and for a voluntary change from Profile.
 class ChangePasswordScreen extends StatefulWidget {
@@ -69,44 +71,45 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         title: Text(widget.forced ? 'Choose a new password' : 'Change password'),
         automaticallyImplyLeading: !widget.forced,
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: CenteredScroll(
           children: [
-            if (widget.forced)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: Text('For your safety, please change the password you were given before continuing.'),
+            if (widget.forced) ...[
+              const AwaIntro(
+                icon: Icons.lock_reset,
+                title: 'Set your own password',
+                subtitle: 'For your safety, please change the password you were given before continuing.',
               ),
+              const SizedBox(height: AwaTheme.gapXl),
+            ],
             PasswordField(
               controller: _current,
               label: 'Current password',
               autofillHints: const [AutofillHints.password],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AwaTheme.gapM),
             PasswordField(
               controller: _next,
               label: 'New password',
               helperText: 'At least 8 characters.',
               autofillHints: const [AutofillHints.newPassword],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AwaTheme.gapM),
             PasswordField(
               controller: _confirm,
               label: 'Confirm new password',
               autofillHints: const [AutofillHints.newPassword],
               onSubmitted: (_) => _submit(),
             ),
-            const SizedBox(height: 16),
-            if (_error.isNotEmpty)
-              Semantics(
-                liveRegion: true,
-                child: Text(_error, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-              ),
-            const SizedBox(height: 16),
+            if (_error.isNotEmpty) ...[
+              const SizedBox(height: AwaTheme.gapM),
+              InlineMessage(text: _error, isError: true),
+            ],
+            const SizedBox(height: AwaTheme.gapL),
             FilledButton(
               onPressed: _busy ? null : _submit,
               child: Text(_busy ? 'Saving...' : 'Change password'),
