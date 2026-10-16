@@ -18,6 +18,9 @@ ui-debug.log
 # generated Flutter/Firebase config (run `flutterfire configure`)
 mobile/lib/firebase_options.dart
 
+# nested project (separate git repo)
+agap.ai/
+
 # editors / OS
 .idea/
 *.iml

@@ -1,4 +1,4 @@
-# AWA — Accessibility Statement
+http://localhost:5173/# AWA — Accessibility Statement
 
 **Scope:** the AWA web app (and the Android app, which follows the same principles).
 **Target:** WCAG 2.1 Level AA (Lighthouse accessibility score 90+).
