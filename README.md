@@ -1,4 +1,4 @@
-# AWA project
+
 
 **Accessibility-first web + mobile portal on Firebase.** Topic-agnostic scaffolding until reveal day
 (Oct 10); the topic plugs in via one config file. Submit: **Oct 28**.
